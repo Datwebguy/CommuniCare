@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CommuniCare | Autonomous AAC Picture Symbol Board Agent</title>
+  <meta name="description" content="CommuniCare autonomously converts everyday caregiver messages into simple plain language and high-contrast AAC picture symbol boards for nonverbal individuals.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Global Application Shell -->
+  <div id="app" class="app-container">
+    
+    <!-- Navigation Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
+            <rect width="32" height="32" rx="8" fill="#1E293B"/>
+            <rect x="6" y="6" width="9" height="9" rx="2" fill="#FACC15"/>
+            <rect x="17" y="6" width="9" height="9" rx="2" fill="#22C55E"/>
+            <rect x="6" y="17" width="9" height="9" rx="2" fill="#F97316"/>
+            <rect x="17" y="17" width="9" height="9" rx="2" fill="#3B82F6"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1 class="brand-name">CommuniCare</h1>
+          <span class="brand-tagline">Autonomous AAC Picture Board Pipeline</span>
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <span class="track-badge">Taskmaster Track · Google Hackathon</span>
+        <div id="backend-status" class="status-pill status-live" title="Cloud Run & Firestore Ready">
+          <span class="status-dot"></span>
+          <span id="status-text">Cloud Engine Active</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-memory-view" class="btn btn-secondary btn-sm" title="View Firestore Memory">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Recipient Memory
+        </button>
+        <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run 2-Turn Adaptation Test">
+          ✨ 2-Turn Adaptive Demo
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-layout">
+
+      <!-- Left Column: Caregiver Input & Configuration -->
+      <section class="caregiver-panel">
+        <div class="panel-card">
+          <div class="panel-header">
+            <h2 class="panel-title">1. Caregiver Message</h2>
+            <span class="panel-subtitle">Natural speech or care notes</span>
+          </div>
+
+          <!-- Recipient Profile Selector -->
+          <div class="form-group">
+            <label for="recipient-select" class="form-label">
+              Care Recipient Profile:
+            </label>
+            <div class="select-wrapper">
+              <select id="recipient-select" class="form-select">
+                <option value="leo_care">Leo (Age 7 · Child · Basic Vocab)</option>
+                <option value="maya_adult">Maya (Adult · Stroke Recovery · Intermediate)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Preset Scenario Pills -->
+          <div class="presets-section">
+            <label class="form-label">Quick Scenario Presets:</label>
+            <div id="presets-container" class="presets-grid">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Raw Message Input -->
+          <div class="form-group">
+            <label for="caregiver-message" class="form-label">Enter Message to Communicate:</label>
+            <div class="textarea-wrapper">
+              <textarea
+                id="caregiver-message"
+                class="form-textarea"
+                rows="4"
+                placeholder="e.g., 'Good morning Leo! Please take your medicine with water, then we will have warm pancakes for breakfast and go for a walk to the park to see the dogs.'"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Generation Options -->
+          <div class="form-row">
+            <div class="form-group half-width">
+              <label for="style-select" class="form-label">Simplification Style:</label>
+              <select id="style-select" class="form-select">
+                <option value="core_words">Core Words (High Impact)</option>
+                <option value="step_by_step">Step-by-Step Routine</option>
+              </select>
+            </div>
+            <div class="form-group half-width align-end">
+              <button id="btn-generate" class="btn btn-primary btn-block">
+                <span class="btn-icon">⚡</span>
+                <span>Generate AAC Board</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Autonomous Pipeline Trace Box -->
+          <div id="pipeline-trace-box" class="pipeline-card">
+            <div class="pipeline-header">
+              <h3 class="pipeline-title">Autonomous Agent Trace</h3>
+              <span id="pipeline-timer" class="pipeline-timer">Ready</span>
+            </div>
+            <div id="pipeline-steps" class="pipeline-steps-list">
+              <div class="pipeline-step step-idle">
+                <div class="step-icon">1</div>
+                <div class="step-info">
+                  <div class="step-title">Firestore Recipient Memory</div>
+                  <div class="step-desc">Awaiting caregiver message...</div>
+                </div>
+              </div>
+              <div class="pipeline-step step-idle">
+                <div class="step-icon">2</div>
+                <div class="step-info">
+                  <div class="step-title">Gemini Language Simplification</div>
+                  <div class="step-desc">Extract plain language & concepts</div>
+                </div>
+              </div>
+              <div class="pipeline-step step-idle">
+                <div class="step-icon">3</div>
+                <div class="step-info">
+                  <div class="step-title">ARASAAC Symbol Resolution</div>
+                  <div class="step-desc">Disambiguate pictograms with text fallback</div>
+                </div>
+              </div>
+              <div class="pipeline-step step-idle">
+                <div class="step-icon">4</div>
+                <div class="step-info">
+                  <div class="step-title">High-Contrast Board Assembly</div>
+                  <div class="step-desc">Fitzgerald Key clinical color mapping</div>
+                </div>
+              </div>
+              <div class="pipeline-step step-idle">
+                <div class="step-icon">5</div>
+                <div class="step-info">
+                  <div class="step-title">Firestore State Persistence</div>
+                  <div class="step-desc">Store vocabulary & feedback memory</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Interactive Generated AAC Board -->
+      <section class="board-panel">
+        <div class="panel-card board-card-container">
+          
+          <!-- Board Header / Toolbar -->
+          <div class="board-topbar">
+            <div class="board-meta">
+              <h2 id="board-title" class="board-main-title">Communication Board</h2>
+              <div id="board-intent-badge" class="intent-badge">Awaiting Generation</div>
+            </div>
+
+            <div class="board-toolbar-actions">
+              <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                Speak All
+              </button>
+              <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical AAC communication sheet">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print Sheet
+              </button>
+              <button id="btn-fullscreen" class="btn btn-secondary btn-sm" title="Fullscreen Presentation View for Recipient">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                Presentation View
+              </button>
+            </div>
+          </div>
+
+          <!-- Simplified Sentence Banner -->
+          <div id="simplified-banner" class="simplified-sentence-box">
+            <span class="simplified-label">Simplified Plain Language:</span>
+            <p id="simplified-text" class="simplified-sentence">
+              Select a preset scenario on the left or type your own message to autonomously generate an accessible picture symbol board.
+            </p>
+            <div id="adaptation-alert" class="adaptation-tag hidden">
+              ✨ Personalized preference applied from memory
+            </div>
+          </div>
+
+          <!-- AAC Symbol Cards Grid -->
+          <div id="aac-cards-grid" class="aac-grid">
+            <!-- Empty state illustration -->
+            <div class="empty-board-state">
+              <div class="empty-icon">🧩</div>
+              <h3>No Board Generated Yet</h3>
+              <p>CommuniCare will translate your caregiver message into high-contrast picture symbols, formatted by clinical Fitzgerald Key standards.</p>
+              <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Sample Message</button>
+            </div>
+          </div>
+
+          <!-- Fitzgerald Key Legend Bar -->
+          <div class="fitzgerald-legend">
+            <span class="legend-title">Fitzgerald Key Standard:</span>
+            <span class="legend-pill" style="background:#FEF9C3; border-color:#CA8A04; color:#854D0E;">Yellow: People</span>
+            <span class="legend-pill" style="background:#DCFCE7; border-color:#16A34A; color:#166534;">Green: Verbs</span>
+            <span class="legend-pill" style="background:#FFEDD5; border-color:#EA580C; color:#9A3412;">Orange: Nouns</span>
+            <span class="legend-pill" style="background:#DBEAFE; border-color:#2563EB; color:#1E40AF;">Blue: Adjectives</span>
+            <span class="legend-pill" style="background:#FCE7F3; border-color:#DB2777; color:#9D174D;">Pink: Feelings</span>
+            <span class="legend-pill" style="background:#EDE9FE; border-color:#7C3AED; color:#5B21B6;">Purple: Time</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal: Recipient Memory & Firestore Inspector -->
+    <div id="memory-modal" class="modal-backdrop hidden">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2 class="modal-title">Recipient Memory (Firestore State)</h2>
+          <button id="btn-close-modal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="memory-profile-summary" class="memory-summary-box">
+            <!-- Profile info -->
+          </div>
+          <div class="memory-tabs">
+            <div class="memory-section">
+              <h3>Learned Vocabulary & Success Reinforcements</h3>
+              <div id="learned-vocab-cloud" class="vocab-cloud"></div>
+            </div>
+            <div class="memory-section">
+              <h3>Custom Symbol Preferences</h3>
+              <div id="symbol-pref-list" class="pref-list"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-close-modal-bottom" class="btn btn-secondary">Close Inspector</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Presentation Fullscreen Banner -->
+    <div id="presentation-banner" class="presentation-header hidden">
+      <span id="presentation-recipient">Showing to: Leo</span>
+      <button id="btn-exit-presentation" class="btn btn-accent btn-sm">Exit Fullscreen (Esc)</button>
+    </div>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
