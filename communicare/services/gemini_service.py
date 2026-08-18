@@ -8,8 +8,11 @@ import os
 import json
 import logging
 from typing import Dict, List, Any, Optional
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from communicare.models import RecipientProfile, GrammarCategory
+
+load_dotenv()
 
 logger = logging.getLogger("communicare.gemini")
 

@@ -7,10 +7,14 @@ Serves Superhuman-style landing page at `/` and interactive studio at `/app`.
 import os
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
+# Load environment variables from .env if present
+load_dotenv()
 
 from communicare.api import router
 
