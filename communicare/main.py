@@ -1,6 +1,7 @@
 """
 Main entrypoint for CommuniCare application.
 Configures FastAPI, CORS middleware, static asset serving, and server lifecycle.
+Serves Superhuman-style landing page at `/` and interactive studio at `/app`.
 """
 
 import os
@@ -45,8 +46,25 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.get("/")
-def serve_index():
-    """Serve main single page application."""
+@app.get("/landing")
+def serve_landing_page():
+    """Serve Superhuman-style editorial landing page."""
+    landing_file = static_dir / "landing.html"
+    if landing_file.exists():
+        return FileResponse(landing_file)
+    index_file = static_dir / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return {
+        "message": "CommuniCare Agent API is active.",
+        "documentation": "/docs",
+        "health": "/api/health"
+    }
+
+
+@app.get("/app")
+def serve_studio_app():
+    """Serve interactive CommuniCare AAC Board Studio."""
     index_file = static_dir / "index.html"
     if index_file.exists():
         return FileResponse(index_file)

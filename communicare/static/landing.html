@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CommuniCare | Autonomous AAC Picture Symbol Board Agent</title>
+  <meta name="description" content="CommuniCare autonomously translates caregiver messages into simple plain language and high-contrast AAC picture symbol boards for nonverbal individuals. Built for the Google All Things Agentic Hackathon.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;460;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/landing.css">
+</head>
+<body>
+
+  <!-- Top Announcement Pill Banner -->
+  <div class="top-announcement-banner">
+    <span>🏆 Google All Things Agentic Hackathon — Taskmaster Track Submission</span>
+    <a href="/app">Launch Live Agent Studio &rarr;</a>
+  </div>
+
+  <!-- Sticky Navigation Header -->
+  <header class="landing-header">
+    <div class="container nav-container">
+      <div class="nav-brand">
+        <div class="nav-logo-mark">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+        </div>
+        <span class="nav-brand-title">CommuniCare</span>
+      </div>
+
+      <nav>
+        <ul class="nav-links">
+          <li class="nav-item"><a href="#pipeline">The Pipeline</a></li>
+          <li class="nav-item"><a href="#architecture">Architecture</a></li>
+          <li class="nav-item"><a href="#sandbox">Live Sandbox</a></li>
+          <li class="nav-item"><a href="#standards">Clinical Standards</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="/docs" target="_blank" class="btn-ghost-text">API Docs</a>
+        <a href="/app" class="btn-wine-primary" style="padding:8px 18px; font-size:14px; border-radius:8px;">
+          Launch Studio &rarr;
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-editorial-section">
+    <div class="hero-background-media">
+      <img src="/static/images/hero_editorial.jpg" alt="Caregiver and child in golden hour sunlight" />
+      <div class="hero-overlay-gradient"></div>
+    </div>
+
+    <!-- Floating Glass Product Cards Composited Over Photography -->
+    <div class="hero-floating-elements">
+      <!-- Card 1: Top Left -->
+      <div class="floating-glass-card floating-card-top-left">
+        <div class="floating-card-header">
+          <div class="floating-symbol-preview" style="background:#FFF7ED; border:2px solid #F97316;">
+            💊
+          </div>
+          <div>
+            <div class="floating-card-title">MEDICINE</div>
+            <div class="floating-card-meta">Noun &bull; Primary Need</div>
+          </div>
+        </div>
+        <span class="floating-card-badge" style="background:#FFF7ED; color:#9A3412;">Reinforced &times;4</span>
+      </div>
+
+      <!-- Card 2: Bottom Left -->
+      <div class="floating-glass-card floating-card-bottom-left">
+        <div class="floating-card-header">
+          <div class="floating-symbol-preview" style="background:#ECFDF5; border:2px solid #10B981;">
+            🚶
+          </div>
+          <div>
+            <div class="floating-card-title">WALK</div>
+            <div class="floating-card-meta">Verb &bull; Action</div>
+          </div>
+        </div>
+        <span class="floating-card-badge" style="background:#ECFDF5; color:#065F46;">Fitzgerald Green</span>
+      </div>
+
+      <!-- Card 3: Top Right -->
+      <div class="floating-glass-card floating-card-top-right">
+        <div class="floating-card-header">
+          <div class="floating-symbol-preview" style="background:#FFF7ED; border:2px solid #F97316;">
+            🥞
+          </div>
+          <div>
+            <div class="floating-card-title">PANCAKES</div>
+            <div class="floating-card-meta">Noun &bull; Breakfast</div>
+          </div>
+        </div>
+        <span class="floating-card-badge" style="background:#EFF6FF; color:#1E40AF;">ARASAAC #34185</span>
+      </div>
+
+      <!-- Card 4: Bottom Right -->
+      <div class="floating-glass-card floating-card-bottom-right">
+        <div class="floating-card-header">
+          <div class="floating-symbol-preview" style="background:#FDF2F8; border:2px solid #EC4899;">
+            😊
+          </div>
+          <div>
+            <div class="floating-card-title">HAPPY</div>
+            <div class="floating-card-meta">Feeling &bull; Social</div>
+          </div>
+        </div>
+        <span class="floating-card-badge" style="background:#FDF2F8; color:#9D174D;">Positive Affect</span>
+      </div>
+    </div>
+
+    <!-- Centered Editorial Content -->
+    <div class="hero-content-wrapper">
+      <div class="hero-badge-pill">
+        <span>Autonomous Taskmaster Agent</span>
+      </div>
+      <h1 class="hero-display-title">
+        Every message translated into dignity and understanding.
+      </h1>
+      <p class="hero-subtext">
+        CommuniCare autonomously transforms complex caregiver speech and daily routine notes into plain language and high-contrast AAC picture symbol boards — adapting to each individual's unique vocabulary and memory.
+      </p>
+      <div class="hero-cta-group">
+        <a href="/app" class="btn-wine-primary">
+          <span>Open CommuniCare Studio</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="#sandbox" class="btn-lilac-outlined">
+          <span>Try Interactive Sandbox</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust & Architecture Stack Strip -->
+  <section class="trust-stack-band">
+    <div class="container">
+      <div class="trust-title">Built with Production-Grade Google Agentic Architecture</div>
+      <div class="trust-grid">
+        <div class="trust-cell">
+          <span class="trust-cell-name">Google Gemini 2.5 Flash</span>
+          <span class="trust-cell-desc">Structured Concept Reasoning</span>
+        </div>
+        <div class="trust-cell">
+          <span class="trust-cell-name">Google Cloud Run</span>
+          <span class="trust-cell-desc">Serverless Container Scale</span>
+        </div>
+        <div class="trust-cell">
+          <span class="trust-cell-name">Firestore Memory</span>
+          <span class="trust-cell-desc">Multi-Turn Recipient State</span>
+        </div>
+        <div class="trust-cell">
+          <span class="trust-cell-name">ARASAAC Catalog</span>
+          <span class="trust-cell-desc">Live Open AAC REST API</span>
+        </div>
+        <div class="trust-cell">
+          <span class="trust-cell-name">Fitzgerald Key</span>
+          <span class="trust-cell-desc">Clinical Color Grammar</span>
+        </div>
+        <div class="trust-cell">
+          <span class="trust-cell-name">Web Speech Audio</span>
+          <span class="trust-cell-desc">Multi-Modal TTS Voice</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Suite Section: The 5-Step Autonomous Pipeline -->
+  <section id="pipeline" class="section-editorial">
+    <div class="container">
+      <div class="section-header-editorial">
+        <span class="section-tag">Autonomous Orchestration</span>
+        <h2 class="section-title">The Taskmaster 5-Step Agent Pipeline</h2>
+        <p class="section-description">
+          CommuniCare replaces the repetitive mental chore of manual communication board crafting with an autonomous background agent pipeline.
+        </p>
+      </div>
+
+      <!-- Suite Tabs Navigation -->
+      <div class="suite-tabs-container">
+        <button class="suite-tab-btn active" data-tab="memory">
+          <span>01. Memory Lookup</span>
+        </button>
+        <button class="suite-tab-btn" data-tab="gemini">
+          <span>02. Language Simplification</span>
+        </button>
+        <button class="suite-tab-btn" data-tab="symbols">
+          <span>03. Symbol Resolution</span>
+        </button>
+        <button class="suite-tab-btn" data-tab="assembly">
+          <span>04. Board Assembly</span>
+        </button>
+        <button class="suite-tab-btn" data-tab="learning">
+          <span>05. Multi-Turn Learning</span>
+        </button>
+      </div>
+
+      <!-- Suite Product Cards Grid -->
+      <div class="suite-cards-grid">
+        <!-- Card 1 -->
+        <div class="suite-product-card">
+          <div>
+            <div class="suite-card-icon" style="background:#EFF6FF; color:#2563EB;">🧠</div>
+            <h3 class="suite-card-name">Firestore Recipient State</h3>
+            <p class="suite-card-body">
+              Fetches individualized vocabulary constraints, age bracket, visual contrast needs, and learned preferences before reasoning begins.
+            </p>
+          </div>
+          <a href="/app" class="link-violet">View Memory Model &rarr;</a>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="suite-product-card">
+          <div>
+            <div class="suite-card-icon" style="background:#F5F3FF; color:#7C3AED;">⚡</div>
+            <h3 class="suite-card-name">Gemini Flash Reasoning</h3>
+            <p class="suite-card-body">
+              Deconstructs unstructured caregiver speech into core AAC communication concepts, identifying primary intent and step-by-step actions.
+            </p>
+          </div>
+          <a href="/app" class="link-violet">Test Plain Language &rarr;</a>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="suite-product-card">
+          <div>
+            <div class="suite-card-icon" style="background:#ECFDF5; color:#10B981;">🎨</div>
+            <h3 class="suite-card-name">Dynamic ARASAAC Resolver</h3>
+            <p class="suite-card-body">
+              Queries the open ARASAAC pictogram catalog and vector illustration engine, applying clinical Fitzgerald Key color codes.
+            </p>
+          </div>
+          <a href="/app" class="link-violet">Browse Symbol Library &rarr;</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Deep Lagoon Dark Feature Band -->
+  <section id="architecture" class="dark-feature-band">
+    <div class="container">
+      <div class="dark-band-grid">
+        
+        <!-- Left: Architectural Editorial Art Collage -->
+        <div class="dark-band-visual">
+          <img src="/static/images/dark_feature_art.jpg" alt="Clinical assistive technology specialist reviewing AAC system" />
+          <div class="dark-band-collage-overlay">
+            <div style="font-size:12px; font-weight:700; color:#A7F3D0; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+              System Execution Trace
+            </div>
+            <div style="font-size:13px; color:#FFFFFF; line-height:1.4;">
+              Caregiver Message &rarr; Profile Memory &rarr; Structured Gemini Output &rarr; Fitzgerald Layout &rarr; Multi-Turn Adaptation (0.8s Latency)
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Text Narrative -->
+        <div>
+          <h2 class="dark-band-headline">
+            Built for the Taskmaster Track. Designed for Real Caregiving.
+          </h2>
+          <p class="dark-band-body">
+            Nonverbal individuals communicating via Augmentative and Alternative Communication (AAC) rely heavily on picture symbol boards to express needs, understand daily schedules, and connect with loved ones.
+          </p>
+          <p class="dark-band-body">
+            Manual board assembly takes Speech-Language Pathologists (SLPs) and caregivers 15–30 minutes per routine. CommuniCare executes this end-to-end task in under a second, adapting to vocabulary growth across turns.
+          </p>
+          <a href="/app" class="btn-white-ghost">
+            <span>Explore Live System Architecture</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Live Sandbox Preview on Landing Page -->
+  <section id="sandbox" class="live-preview-section">
+    <div class="container">
+      <div class="section-header-editorial">
+        <span class="section-tag">Interactive Sandbox</span>
+        <h2 class="section-title">Experience CommuniCare in Real-Time</h2>
+        <p class="section-description">
+          Test any caregiver message below to watch the autonomous agent simplify concepts and assemble an AAC picture board.
+        </p>
+      </div>
+
+      <div class="preview-card-frame">
+        <div class="preview-interactive-bar">
+          <input
+            type="text"
+            id="landing-message-input"
+            class="preview-input"
+            value="Good morning Leo! Please take your medicine with a glass of water, and then we will have warm pancakes for breakfast."
+            placeholder="Type any caregiver instruction or daily routine..."
+          />
+          <button id="btn-landing-generate" class="btn-wine-primary" style="white-space:nowrap;">
+            <span>⚡ Generate Board</span>
+          </button>
+        </div>
+
+        <div style="font-size:13px; font-weight:700; color:var(--color-stone-gray); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">
+          Generated AAC Communication Cards (Click to Speak):
+        </div>
+
+        <div id="landing-board-cards" class="preview-aac-result-row">
+          <!-- Dynamically populated or seeded with cards -->
+          <div class="mini-aac-card" style="--card-border:#F97316;" onclick="window.speakText('MEDICINE')">
+            <div class="mini-card-icon" style="font-size:2rem;">💊</div>
+            <span class="mini-card-label">MEDICINE</span>
+            <span style="font-size:11px; color:#9A3412; font-weight:700;">NOUN</span>
+          </div>
+          <div class="mini-aac-card" style="--card-border:#F97316;" onclick="window.speakText('WATER')">
+            <div class="mini-card-icon" style="font-size:2rem;">💧</div>
+            <span class="mini-card-label">WATER</span>
+            <span style="font-size:11px; color:#9A3412; font-weight:700;">NOUN</span>
+          </div>
+          <div class="mini-aac-card" style="--card-border:#10B981;" onclick="window.speakText('EAT')">
+            <div class="mini-card-icon" style="font-size:2rem;">🍽️</div>
+            <span class="mini-card-label">EAT</span>
+            <span style="font-size:11px; color:#065F46; font-weight:700;">VERB</span>
+          </div>
+          <div class="mini-aac-card" style="--card-border:#F97316;" onclick="window.speakText('PANCAKES')">
+            <div class="mini-card-icon" style="font-size:2rem;">🥞</div>
+            <span class="mini-card-label">PANCAKES</span>
+            <span style="font-size:11px; color:#9A3412; font-weight:700;">NOUN</span>
+          </div>
+        </div>
+
+        <div style="margin-top:24px; text-align:center;">
+          <a href="/app" class="link-violet" style="font-size:15px; font-weight:600;">
+            Open the Full Studio for Custom Profiles, Presets, and Print Exports &rarr;
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Atmospheric Gradient Banner -->
+  <section class="atmospheric-gradient-section">
+    <div class="container atmospheric-flex">
+      <h2 class="atmospheric-title">
+        Eliminate the translation barrier in assistive caregiving.
+      </h2>
+      <a href="/app" class="btn-wine-primary" style="padding:16px 32px; font-size:17px;">
+        <span>Launch Full CommuniCare Studio</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Editorial Site-wide Footer (Midnight Wine Ground) -->
+  <footer class="landing-footer">
+    <div class="container">
+      <div class="footer-grid">
+        
+        <div class="footer-brand-col">
+          <div class="nav-brand">
+            <div class="nav-logo-mark" style="background:#FFFFFF;">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#421D24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            </div>
+            <span class="nav-brand-title" style="color:#FFFFFF;">CommuniCare</span>
+          </div>
+          <p class="footer-tagline">
+            Autonomous AAC Picture Symbol Board Agent engineered for nonverbal individuals, SLPs, and caregivers.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Agent Architecture</h4>
+          <ul class="footer-links-list">
+            <li class="footer-link-item"><a href="/app">Taskmaster Pipeline</a></li>
+            <li class="footer-link-item"><a href="/docs">FastAPI Specification</a></li>
+            <li class="footer-link-item"><a href="/api/health">System Health Check</a></li>
+            <li class="footer-link-item"><a href="/api/recipients">Firestore Memory API</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Clinical Standards</h4>
+          <ul class="footer-links-list">
+            <li class="footer-link-item"><a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC Open Symbols</a></li>
+            <li class="footer-link-item"><a href="#pipeline">Fitzgerald Key Standard</a></li>
+            <li class="footer-link-item"><a href="/app">Plain Language Guidelines</a></li>
+            <li class="footer-link-item"><a href="/app">Web Speech Audio TTS</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Hackathon Submission</h4>
+          <ul class="footer-links-list">
+            <li class="footer-link-item"><a href="#">Google All Things Agentic</a></li>
+            <li class="footer-link-item"><a href="#">Taskmaster Track</a></li>
+            <li class="footer-link-item"><a href="/app">Live Application</a></li>
+            <li class="footer-link-item"><a href="https://github.com" target="_blank" rel="noopener">GitHub Repository</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom-bar">
+        <span>&copy; 2026 CommuniCare Agent. Open-source assistive technology built for human dignity.</span>
+        <span>Google Cloud Run &bull; Gemini 2.5 Flash &bull; Firestore State</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/landing.js"></script>
+</body>
+</html>
