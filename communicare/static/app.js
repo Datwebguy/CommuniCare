@@ -186,11 +186,29 @@ document.addEventListener('DOMContentLoaded', () => {
     return englishVoice || null;
   }
 
+  function sanitizeTextForSpeech(text) {
+    if (!text) return '';
+    return text
+      .replace(/[→⇒⇨➔➜]/g, ' ')
+      .replace(/->|=>/g, ' ')
+      .replace(/[-_]/g, ' ')
+      .replace(/[•*#~|/\\<>[\]{}]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function speakSingleWord(text, cardEl = null) {
     if (!('speechSynthesis' in window)) return Promise.resolve();
     
+    const cleanText = sanitizeTextForSpeech(text);
+    if (!cleanText) return Promise.resolve();
+
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.resume();
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    window._currentUtterance = utterance; // Prevent garbage collection mid-speech
+
     const voice = getSelectedSpeechVoice();
     if (voice) utterance.voice = voice;
     utterance.pitch = voiceConfig.pitch;
@@ -201,20 +219,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     return new Promise((resolve) => {
-      let resolved = false;
+      let settled = false;
       const finish = () => {
-        if (!resolved) {
-          resolved = true;
+        if (!settled) {
+          settled = true;
+          window._currentUtterance = null;
           if (cardEl) cardEl.classList.remove('card-speaking');
           resolve();
         }
       };
 
       utterance.onend = finish;
-      utterance.onerror = finish;
+      utterance.onerror = (e) => {
+        console.warn('Speech error/interrupted:', e);
+        finish();
+      };
 
-      // Failsafe timeout in case onend is dropped by browser
-      setTimeout(finish, 4000);
+      // Dynamic safety timeout proportional to sentence length
+      const safetyTimeoutMs = Math.max(3500, (cleanText.length * 160) / Math.max(0.5, voiceConfig.rate));
+      setTimeout(finish, safetyTimeoutMs);
 
       window.speechSynthesis.speak(utterance);
     });
@@ -256,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Step 2: Read through 100% of the cards in the grid sequentially
       const cardElements = document.querySelectorAll('.aac-card');
       for (let i = 0; i < currentBoard.cards.length; i++) {
-        if (!isSpeakingAll) break; // Check if cancelled
+        if (!isSpeakingAll) break;
 
         const card = currentBoard.cards[i];
         const cardEl = cardElements[i];

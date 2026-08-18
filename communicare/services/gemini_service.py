@@ -1,7 +1,7 @@
 """
 Gemini Reasoning & Language Simplification Service for CommuniCare.
 Uses Google GenAI SDK to simplify caregiver messages and map concepts to AAC tokens.
-Includes robust heuristic fallback engine for offline development and testing.
+Includes robust natural-language heuristic engine for offline development and testing.
 """
 
 import os
@@ -96,7 +96,7 @@ CARE RECIPIENT PROFILE:
 - Caregiver Notes: {profile.caregiver_notes or 'None'}
 
 INSTRUCTIONS:
-1. Simplify the message into a short, plain language phrase (1-2 short sentences max).
+1. Simplify the message into a short, natural, complete plain language sentence (1-2 sentences max, easy for text-to-speech to read aloud smoothly). Never use arrows (→), bullet symbols, or metadata labels in the simplified sentence.
 2. Extract {profile.max_board_cards} essential concepts/words that convey the action, key items, and emotions.
 3. Categorize each concept using Fitzgerald Key grammar:
    - "people" (Yellow): I, you, doctor, caregiver, friend
@@ -110,8 +110,8 @@ INSTRUCTIONS:
 
 Respond ONLY with valid JSON matching this schema:
 {{
-  "simplified_message": "string",
-  "core_intent": "string",
+  "simplified_message": "A clean, natural plain language sentence to speak aloud",
+  "core_intent": "Brief 2-4 word intent summary",
   "gemini_reasoning": "string explaining how the message was simplified and adapted to the profile",
   "concepts": [
     {{
@@ -133,7 +133,6 @@ Respond ONLY with valid JSON matching this schema:
         )
 
         raw_json = response.text.strip()
-        # Clean potential markdown formatting
         if raw_json.startswith("```json"):
             raw_json = raw_json[7:-3].strip()
         elif raw_json.startswith("```"):
@@ -157,7 +156,7 @@ Respond ONLY with valid JSON matching this schema:
     ) -> SimplificationResult:
         """
         Intelligent offline reasoning heuristic for testing and demo reliability.
-        Extracts key verbs, nouns, and emotions from caregiver message.
+        Produces complete, natural plain language sentences and extracts salient AAC concepts.
         """
         msg_lower = raw_message.lower()
         extracted: List[ExtractedConcept] = []
@@ -168,7 +167,9 @@ Respond ONLY with valid JSON matching this schema:
             # Time & Sequence
             ("morning", "time_schedule", "Time indicator for morning routine"),
             ("now", "time_schedule", "Immediate action indicator"),
-            ("later", "time_schedule", "Sequence / future action"),
+            ("later", "time_schedule", "Sequence and future action"),
+            ("afternoon", "time_schedule", "Afternoon time marker"),
+            ("evening", "time_schedule", "Evening routine indicator"),
             # Medical / Care
             ("medicine", "noun", "Essential care item"),
             ("pills", "noun", "Medication item"),
@@ -188,21 +189,27 @@ Respond ONLY with valid JSON matching this schema:
             ("drink", "verb", "Hydration action"),
             ("snack", "noun", "Food snack item"),
             ("lunch", "noun", "Midday meal"),
+            ("dinner", "noun", "Evening meal"),
             # Activities & Locations
             ("walk", "verb", "Physical activity"),
             ("park", "noun", "Outdoor destination"),
-            ("dog", "noun", "Companion animal / subject"),
+            ("dog", "noun", "Companion animal and subject"),
+            ("dogs", "noun", "Companion animal and subject"),
             ("car", "noun", "Transportation vehicle"),
             ("bus", "noun", "Transit vehicle"),
             ("school", "noun", "Educational setting"),
-            ("play", "verb", "Leisure / recreational activity"),
+            ("play", "verb", "Leisure and recreational activity"),
             ("book", "noun", "Reading activity"),
             ("music", "noun", "Audio sensory engagement"),
             ("sleep", "verb", "Resting state"),
-            # Social / Emotional
+            ("bed", "noun", "Rest location"),
+            ("shoes", "noun", "Clothing item for transition"),
+            ("coat", "noun", "Clothing item"),
+            # Social / Emotional / Sensory
             ("happy", "social_feelings", "Positive emotion"),
             ("hurt", "social_feelings", "Pain or discomfort"),
             ("tired", "social_feelings", "Fatigue indicator"),
+            ("quiet", "adjective", "Calm sensory environment"),
             ("calm", "adjective", "Regulation state"),
             ("help", "verb", "Assistance request"),
             ("stop", "verb", "Halt action"),
@@ -226,7 +233,6 @@ Respond ONLY with valid JSON matching this schema:
         # 2. Check rule matches in the message
         for word, category, reasoning in KEYWORD_RULES:
             if word in msg_lower and word not in seen:
-                # Give bonus priority if recipient previously had success with this word
                 bonus = profile.success_history.get(word, 0)
                 extracted.append(ExtractedConcept(
                     concept=word.replace(" ", "_"),
@@ -256,20 +262,100 @@ Respond ONLY with valid JSON matching this schema:
         extracted.sort(key=lambda c: c.priority, reverse=True)
         final_concepts = extracted[:profile.max_board_cards]
 
-        # Generate simplified sentence
-        concept_names = [c.concept.replace("_", " ").title() for c in final_concepts]
-        simplified = " → ".join(concept_names) if concept_names else raw_message[:40]
+        # Generate a complete, natural plain language sentence (NO arrows or technical codes)
+        simplified_sentence = self._synthesize_natural_sentence(raw_message, final_concepts, profile)
+        core_intent = self._infer_core_intent(final_concepts, raw_message)
 
         return SimplificationResult(
-            simplified_message=f"Key concepts: {simplified}",
-            core_intent="Care Routine & Communication Board",
+            simplified_message=simplified_sentence,
+            core_intent=core_intent,
             gemini_reasoning=(
-                f"Extracted {len(final_concepts)} high-salience concepts tailored to "
+                f"Extracted {len(final_concepts)} high salience concepts tailored to "
                 f"{profile.name}'s {profile.vocabulary_level} vocabulary level. "
                 f"Prioritized known successful words ({', '.join(k for k in profile.success_history if k in seen) or 'none'})."
             ),
             concepts=final_concepts
         )
+
+    def _synthesize_natural_sentence(
+        self,
+        raw_message: str,
+        concepts: List[ExtractedConcept],
+        profile: RecipientProfile
+    ) -> str:
+        """
+        Constructs a complete, grammatical plain-language sentence suitable for speech synthesis.
+        Eliminates jargon, arrows, and complex clauses while preserving conversational warmth.
+        """
+        c_words = {c.concept.lower().replace("_", " ") for c in concepts}
+        
+        first_name = profile.name.split()[0] if profile.name and "Test" not in profile.name else ""
+        greeting = f"Good morning {first_name}. " if "morning" in c_words and first_name else (f"Hello {first_name}. " if first_name else "")
+
+        # Routine patterns
+        actions = []
+        if "medicine" in c_words or "pills" in c_words:
+            if "water" in c_words:
+                actions.append("take your medicine with a glass of water")
+            else:
+                actions.append("take your medicine")
+        
+        if "pancakes" in c_words:
+            actions.append("eat warm pancakes for breakfast")
+        elif "breakfast" in c_words or "eggs" in c_words:
+            actions.append("eat breakfast")
+        elif "snack" in c_words or "lunch" in c_words:
+            actions.append("have a healthy snack")
+
+        if "walk" in c_words:
+            if "park" in c_words and ("dog" in c_words or "dogs" in c_words):
+                actions.append("take a walk to the park to see the dogs")
+            elif "park" in c_words:
+                actions.append("take a walk to the park")
+            else:
+                actions.append("go for a walk outside")
+
+        if "doctor" in c_words:
+            actions.append("the doctor will visit today to help check your health")
+
+        if "teeth" in c_words or "wash" in c_words:
+            actions.append("brush your teeth and wash up")
+
+        if "sleep" in c_words or "bed" in c_words:
+            actions.append("time to rest and go to sleep")
+
+        if actions:
+            if len(actions) == 1:
+                return f"{greeting}Please {actions[0]}."
+            elif len(actions) == 2:
+                return f"{greeting}Please {actions[0]}, then {actions[1]}."
+            else:
+                return f"{greeting}First {actions[0]}, then {actions[1]}, and {actions[2]}."
+
+        # If no hardcoded template matched, clean the original caregiver sentence directly
+        cleaned = raw_message.strip()
+        cleaned = cleaned.replace("→", " ").replace("->", " ").replace("•", " ")
+        sentences = [s.strip() for s in cleaned.replace("!", ".").replace("?", ".").split(".") if s.strip()]
+        if sentences:
+            return sentences[0] + "."
+
+        return "Time for our daily routine."
+
+    def _infer_core_intent(self, concepts: List[ExtractedConcept], raw_message: str) -> str:
+        """Categorizes the primary clinical or care routine intent."""
+        c_names = {c.concept.lower().replace("_", " ") for c in concepts}
+        
+        if any(w in c_names for w in ["medicine", "pills", "doctor", "hurt"]):
+            return "Medical & Care Routine"
+        if any(w in c_names for w in ["breakfast", "pancakes", "eggs", "eat", "drink", "water", "snack", "lunch"]):
+            return "Meal & Hydration"
+        if any(w in c_names for w in ["walk", "park", "dog", "dogs", "play", "car", "bus", "school"]):
+            return "Daily Activity & Transition"
+        if any(w in c_names for w in ["sleep", "bed", "teeth", "wash", "toilet", "bathroom"]):
+            return "Hygiene & Bedtime Routine"
+        if any(w in c_names for w in ["happy", "tired", "calm", "quiet", "help"]):
+            return "Feelings & Emotional Support"
+        return "Daily Communication"
 
 
 # Singleton instance
