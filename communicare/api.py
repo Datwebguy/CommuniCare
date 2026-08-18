@@ -1,7 +1,7 @@
 """
 FastAPI Route Handlers for CommuniCare.
 Exposes REST endpoints for autonomous board generation, memory management,
-feedback loops, and health checks.
+feedback loops, dynamic presets, and health checks.
 """
 
 from typing import List, Dict, Any, Optional
@@ -19,38 +19,6 @@ from communicare.services.symbol_library import symbol_resolver
 from communicare.services.gemini_service import gemini_service
 
 router = APIRouter(prefix="/api", tags=["CommuniCare Agent"])
-
-# Curated Presets for Quick Caregiver Demos
-DEMO_PRESETS = [
-    {
-        "id": "morning_breakfast_walk",
-        "title": "Morning Routine & Breakfast",
-        "description": "Medicine, breakfast choices, and park walk",
-        "recipient_id": "leo_care",
-        "message": "Good morning Leo! Please take your medicine with a glass of water. Then we will eat warm pancakes for breakfast and take a walk to the park to see the dogs."
-    },
-    {
-        "id": "medical_checkin",
-        "title": "Medical & Sensory Check-in",
-        "description": "Therapy session, feeling check, and hydration",
-        "recipient_id": "maya_adult",
-        "message": "Hello Maya, the doctor will visit soon. Let me know if you feel hurt or tired, and please drink some water before we listen to quiet music."
-    },
-    {
-        "id": "school_transition",
-        "title": "School Transition & Lunch",
-        "description": "Getting dressed, riding the school bus, and lunchtime",
-        "recipient_id": "leo_care",
-        "message": "Time to put on your clothes and shoes. The yellow school bus is coming soon to take us to school. We have a lunch box with an apple and juice!"
-    },
-    {
-        "id": "evening_bedtime",
-        "title": "Evening Hygiene & Bedtime",
-        "description": "Bathroom, brushing teeth, and bedtime book",
-        "recipient_id": "leo_care",
-        "message": "It is nighttime. Let's use the bathroom, wash hands, and brush teeth. Then we can read a book in bed and go to sleep."
-    }
-]
 
 
 @router.post("/generate-board", response_model=AACBoardResponse, status_code=status.HTTP_200_OK)
@@ -77,7 +45,7 @@ def generate_aac_board(request: CaregiverMessageRequest):
 
 @router.get("/recipients", response_model=List[RecipientProfile])
 def list_recipients():
-    """List all registered care recipients and their learned profiles."""
+    """List all registered care recipients and their learned profiles dynamically."""
     return firestore_service.list_recipients()
 
 
@@ -89,9 +57,18 @@ def get_recipient(recipient_id: str):
 
 @router.post("/recipients", response_model=RecipientProfile, status_code=status.HTTP_200_OK)
 def save_recipient(profile: RecipientProfile):
-    """Create or update a care recipient profile."""
+    """Create or update a care recipient profile dynamically."""
     firestore_service.save_recipient_profile(profile)
     return profile
+
+
+@router.delete("/recipients/{recipient_id}")
+def delete_recipient(recipient_id: str):
+    """Delete a care recipient profile."""
+    success = firestore_service.delete_recipient_profile(recipient_id)
+    if not success:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipient not found")
+    return {"status": "success", "message": f"Deleted recipient {recipient_id}"}
 
 
 @router.post("/feedback", response_model=FeedbackResponse)
@@ -122,13 +99,24 @@ def submit_caregiver_feedback(feedback: FeedbackRequest):
 
 @router.get("/presets")
 def get_demo_presets():
-    """Return pre-configured realistic caregiver scenarios for instant testing."""
-    return DEMO_PRESETS
+    """Return dynamic care routine presets stored in Firestore / persistent layer."""
+    return firestore_service.list_presets()
+
+
+@router.post("/presets")
+def save_custom_preset(preset: Dict[str, Any]):
+    """Save a dynamic caregiver scenario preset."""
+    if not preset.get("title") or not preset.get("message"):
+        raise HTTPException(status_code=400, detail="Title and message are required.")
+    success = firestore_service.save_preset(preset)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save preset.")
+    return {"status": "success", "preset": preset}
 
 
 @router.get("/symbols/search")
 def search_symbols(q: str = Query(..., min_length=1)):
-    """Search available AAC pictograms and vector icons."""
+    """Search available AAC pictograms and vector icons dynamically."""
     return symbol_resolver.search_symbols(q)
 
 

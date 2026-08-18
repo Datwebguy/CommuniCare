@@ -21,13 +21,12 @@ def test_symbol_resolver_direct_match():
 
 
 def test_symbol_resolver_synonym_match():
-    """Verify synonyms (e.g., 'pills' -> 'medicine') correctly resolve."""
+    """Verify synonyms (e.g., 'pills') correctly resolve to dynamic ARASAAC pictograms."""
     card = symbol_resolver.resolve_concept("pills")
     assert card.word == "PILLS"
     assert card.category == GrammarCategory.NOUN
-    assert card.svg_icon is not None
+    assert (card.image_url is not None or card.svg_icon is not None)
     assert card.is_fallback is False
-    assert card.subtext == "Mapped to: Medicine"
 
 
 def test_symbol_resolver_verb_and_people():

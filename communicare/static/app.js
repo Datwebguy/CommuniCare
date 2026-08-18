@@ -1,12 +1,13 @@
 /**
  * CommuniCare: Interactive Frontend & Autonomous Pipeline Visualizer
- * Modern, accessible, high-contrast AAC interface with Web Speech audio.
+ * Fully dynamic database-driven profiles, presets, live ARASAAC pictograms, and Web Speech audio.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const caregiverMessageInput = document.getElementById('caregiver-message');
   const recipientSelect = document.getElementById('recipient-select');
+  const btnAddProfile = document.getElementById('btn-add-profile');
   const styleSelect = document.getElementById('style-select');
   const btnGenerate = document.getElementById('btn-generate');
   const presetsContainer = document.getElementById('presets-container');
@@ -35,9 +36,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnExitPresentation = document.getElementById('btn-exit-presentation');
   const presentationRecipient = document.getElementById('presentation-recipient');
 
+  // Add Profile Modal Elements
+  const addProfileModal = document.getElementById('add-profile-modal');
+  const btnCloseProfileModal = document.getElementById('btn-close-profile-modal');
+  const addProfileForm = document.getElementById('add-profile-form');
+  const newProfileName = document.getElementById('new-profile-name');
+  const newProfileAge = document.getElementById('new-profile-age');
+  const newProfileVocab = document.getElementById('new-profile-vocab');
+  const newProfileCards = document.getElementById('new-profile-cards');
+  const newProfileNotes = document.getElementById('new-profile-notes');
+
   // Application State
   let currentBoard = null;
   let currentPresets = [];
+  let currentRecipients = [];
   let isGenerating = false;
   let isTraceExpanded = true;
 
@@ -45,10 +57,45 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();
 
   async function initApp() {
+    await loadRecipients();
     await loadPresets();
     setupEventListeners();
   }
 
+  // Dynamically load recipient profiles from Firestore
+  async function loadRecipients(selectedId = null) {
+    try {
+      const res = await fetch('/api/recipients');
+      if (res.ok) {
+        currentRecipients = await res.json();
+        renderRecipientSelect(selectedId);
+      }
+    } catch (e) {
+      console.warn('Could not load recipients:', e);
+    }
+  }
+
+  function renderRecipientSelect(selectedId = null) {
+    recipientSelect.innerHTML = '';
+    if (currentRecipients.length === 0) {
+      recipientSelect.innerHTML = '<option value="">No recipients found</option>';
+      return;
+    }
+
+    currentRecipients.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.recipient_id;
+      const emoji = r.age_group === 'child' ? '👦' : (r.age_group === 'teen' ? '🧑' : '👩');
+      opt.textContent = `${emoji} ${r.name} (${r.age_group.toUpperCase()} • ${r.vocabulary_level.toUpperCase()})`;
+      recipientSelect.appendChild(opt);
+    });
+
+    if (selectedId) {
+      recipientSelect.value = selectedId;
+    }
+  }
+
+  // Dynamically load presets from database
   async function loadPresets() {
     try {
       const res = await fetch('/api/presets');
@@ -76,10 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.className = 'preset-chip';
       chip.type = 'button';
       chip.innerHTML = `${icon} ${p.title}`;
-      chip.title = p.description;
+      chip.title = p.description || p.message;
       chip.addEventListener('click', () => {
         caregiverMessageInput.value = p.message;
-        if (p.recipient_id) {
+        if (p.recipient_id && currentRecipients.some(r => r.recipient_id === p.recipient_id)) {
           recipientSelect.value = p.recipient_id;
         }
         caregiverMessageInput.focus();
@@ -126,6 +173,55 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === memoryModal) closeMemoryModal();
     });
 
+    // Add Profile Modal
+    btnAddProfile.addEventListener('click', () => {
+      addProfileForm.reset();
+      addProfileModal.classList.remove('hidden');
+      newProfileName.focus();
+    });
+    btnCloseProfileModal.addEventListener('click', () => {
+      addProfileModal.classList.add('hidden');
+    });
+    addProfileModal.addEventListener('click', (e) => {
+      if (e.target === addProfileModal) addProfileModal.classList.add('hidden');
+    });
+
+    addProfileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = newProfileName.value.trim();
+      if (!name) return;
+
+      const recipientId = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.floor(Math.random() * 1000);
+      const newProfile = {
+        recipient_id: recipientId,
+        name: name,
+        age_group: newProfileAge.value,
+        vocabulary_level: newProfileVocab.value,
+        max_board_cards: parseInt(newProfileCards.value, 10),
+        high_contrast_mode: true,
+        color_coding_enabled: true,
+        caregiver_notes: newProfileNotes.value.trim() || null,
+        preferred_symbol_mappings: {},
+        learned_vocabulary: [],
+        success_history: {}
+      };
+
+      try {
+        const res = await fetch('/api/recipients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newProfile)
+        });
+        if (res.ok) {
+          addProfileModal.classList.add('hidden');
+          await loadRecipients(recipientId);
+          alert(`Profile for '${name}' created successfully in Firestore!`);
+        }
+      } catch (err) {
+        alert(`Failed to save profile: ${err.message}`);
+      }
+    });
+
     // 2-Turn Adaptive Demo Showcase
     btnDemoTour.addEventListener('click', () => runTwoTurnAdaptiveDemo());
 
@@ -145,6 +241,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!rawMessage) {
       alert('Please enter or select a caregiver message first.');
       caregiverMessageInput.focus();
+      return;
+    }
+
+    if (!recipientId) {
+      alert('Please select or create a care recipient profile first.');
       return;
     }
 
@@ -292,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Attach click to speak for all cards
+    // Click to speak individual cards
     document.querySelectorAll('.aac-card').forEach(cardEl => {
       cardEl.addEventListener('click', () => {
         const word = cardEl.getAttribute('data-word');
@@ -366,6 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function openMemoryModal() {
     const recipientId = recipientSelect.value;
+    if (!recipientId) return;
+
     try {
       const res = await fetch(`/api/recipients/${recipientId}`);
       if (res.ok) {
@@ -390,17 +493,21 @@ document.addEventListener('DOMContentLoaded', () => {
       <div style="margin-top:6px;"><em>Caregiver Notes:</em> ${profile.caregiver_notes || 'None recorded.'}</div>
     `;
 
-    learnedVocabCloud.innerHTML = profile.learned_vocabulary.map(word => {
-      const count = profile.success_history[word] || 1;
-      return `
-        <div class="vocab-chip">
-          <span>${word.toUpperCase()}</span>
-          <span class="vocab-count">${count}&times;</span>
-        </div>
-      `;
-    }).join('');
+    if (!profile.learned_vocabulary || profile.learned_vocabulary.length === 0) {
+      learnedVocabCloud.innerHTML = '<div style="color:var(--text-secondary); font-size:0.8rem;">No learned words recorded yet. Generate boards to build memory!</div>';
+    } else {
+      learnedVocabCloud.innerHTML = profile.learned_vocabulary.map(word => {
+        const count = (profile.success_history && profile.success_history[word]) || 1;
+        return `
+          <div class="vocab-chip">
+            <span>${word.toUpperCase()}</span>
+            <span class="vocab-count">${count}&times;</span>
+          </div>
+        `;
+      }).join('');
+    }
 
-    const prefs = Object.entries(profile.preferred_symbol_mappings);
+    const prefs = Object.entries(profile.preferred_symbol_mappings || {});
     if (prefs.length === 0) {
       symbolPrefList.innerHTML = '<div style="color:var(--text-secondary); font-size:0.8rem;">No custom symbol overrides yet.</div>';
     } else {
@@ -416,8 +523,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function runTwoTurnAdaptiveDemo() {
     alert("Starting 2-Turn Adaptive Memory Demonstration:\n\nTurn 1: CommuniCare processes a morning routine message.\nFeedback: Caregiver reinforces 'medicine' & 'pancakes'.\nTurn 2: CommuniCare processes an afternoon reminder and automatically applies learned Firestore preferences!");
 
-    recipientSelect.value = 'leo_care';
-    caregiverMessageInput.value = 'Good morning Leo! Please take your medicine with a glass of water, and then we will have warm pancakes for breakfast.';
+    if (currentRecipients.some(r => r.recipient_id === 'leo_care')) {
+      recipientSelect.value = 'leo_care';
+    }
+    caregiverMessageInput.value = 'Good morning Leo! Please take your medicine with a glass of water, then we will have warm pancakes for breakfast.';
     await handleGenerateBoard();
 
     await new Promise(r => setTimeout(r, 1800));
@@ -426,7 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         board_id: currentBoard ? currentBoard.board_id : 'demo',
-        recipient_id: 'leo_care',
+        recipient_id: recipientSelect.value,
         word: 'medicine',
         action: 'worked_well',
         preferred_symbol: 'medicine'

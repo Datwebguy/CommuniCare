@@ -67,3 +67,27 @@ def test_list_recipients():
     ids = [r.recipient_id for r in recipients]
     assert "leo_care" in ids
     assert "maya_adult" in ids
+
+
+def test_delete_recipient_profile():
+    """Verify deleting a recipient profile."""
+    temp_id = "temp_del_test"
+    firestore_service.save_recipient_profile(RecipientProfile(recipient_id=temp_id, name="Temp"))
+    assert firestore_service.get_recipient_profile(temp_id).name == "Temp"
+    deleted = firestore_service.delete_recipient_profile(temp_id)
+    assert deleted is True
+
+
+def test_dynamic_presets():
+    """Verify listing and saving custom presets."""
+    presets = firestore_service.list_presets()
+    assert len(presets) >= 1
+    new_preset = {
+        "id": "test_custom_preset",
+        "title": "Test Routine",
+        "message": "Time for breakfast!"
+    }
+    saved = firestore_service.save_preset(new_preset)
+    assert saved is True
+    updated_presets = firestore_service.list_presets()
+    assert any(p["id"] == "test_custom_preset" for p in updated_presets)

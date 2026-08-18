@@ -30,13 +30,14 @@
         </div>
       </div>
 
-      <!-- Recipient Profile Selector Chip -->
+      <!-- Recipient Profile Selector Chip (Dynamically populated from Firestore) -->
       <div class="header-recipient-selector">
-        <label for="recipient-select" class="header-recipient-label">Care Recipient:</label>
+        <label for="recipient-select" class="header-recipient-label">Recipient:</label>
         <select id="recipient-select" class="header-select">
-          <option value="leo_care">👦 Leo (Age 7 &bull; Child &bull; Basic AAC)</option>
-          <option value="maya_adult">👩 Maya (Adult &bull; Stroke Recovery &bull; Intermediate)</option>
+          <!-- Dynamically populated from /api/recipients -->
+          <option value="">Loading profiles...</option>
         </select>
+        <button id="btn-add-profile" class="btn-icon-sm" title="Add New Recipient Profile">+</button>
       </div>
 
       <div class="header-actions">
@@ -59,7 +60,7 @@
         <div class="presets-row">
           <span class="presets-label">Scenario Presets:</span>
           <div id="presets-container" class="presets-chips">
-            <!-- Dynamically populated chips -->
+            <!-- Dynamically populated from /api/presets -->
           </div>
         </div>
 
@@ -219,9 +220,7 @@
           <button id="btn-close-modal" class="btn-close">&times;</button>
         </div>
         <div class="modal-body">
-          <div id="memory-profile-summary" class="memory-summary-box">
-            <!-- Profile info -->
-          </div>
+          <div id="memory-profile-summary" class="memory-summary-box"></div>
           <div class="memory-tabs">
             <div class="memory-section">
               <h3>Learned Vocabulary & Success Reinforcements</h3>
@@ -239,9 +238,61 @@
       </div>
     </div>
 
+    <!-- Modal: Add New Recipient Profile -->
+    <div id="add-profile-modal" class="modal-backdrop hidden">
+      <div class="modal-container" style="max-width: 520px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Add Care Recipient Profile</h2>
+          <button id="btn-close-profile-modal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="add-profile-form">
+            <div class="form-group">
+              <label for="new-profile-name" class="form-label">Recipient Name / Nickname:</label>
+              <input type="text" id="new-profile-name" class="form-select" placeholder="e.g. Sam, Lucas, Grandma Helen" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="new-profile-age" class="form-label">Age Group:</label>
+                <select id="new-profile-age" class="form-select">
+                  <option value="child">Child</option>
+                  <option value="teen">Teen</option>
+                  <option value="adult">Adult</option>
+                </select>
+              </div>
+              <div class="form-group half-width">
+                <label for="new-profile-vocab" class="form-label">Vocabulary Level:</label>
+                <select id="new-profile-vocab" class="form-select">
+                  <option value="basic">Basic (3-5 core words)</option>
+                  <option value="intermediate">Intermediate (5-7 words)</option>
+                  <option value="advanced">Advanced (7-9 words)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="new-profile-cards" class="form-label">Max Cards Per Board:</label>
+              <select id="new-profile-cards" class="form-select">
+                <option value="4">4 Cards (High Clarity)</option>
+                <option value="6" selected>6 Cards (Standard)</option>
+                <option value="8">8 Cards (Extended)</option>
+                <option value="10">10 Cards (Complex)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="new-profile-notes" class="form-label">Caregiver Communication Notes (Optional):</label>
+              <textarea id="new-profile-notes" class="form-textarea" rows="2" placeholder="e.g., Prefers yellow food cards, easily fatigued in afternoons"></textarea>
+            </div>
+            <div class="modal-footer" style="padding:0; margin-top:1rem; border-top:none;">
+              <button type="submit" class="btn btn-primary btn-block">Create Profile in Firestore</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Presentation Fullscreen Banner -->
     <div id="presentation-banner" class="presentation-header hidden">
-      <span id="presentation-recipient">Showing Board to: Leo</span>
+      <span id="presentation-recipient">Showing Board to: Recipient</span>
       <button id="btn-exit-presentation" class="btn btn-secondary btn-sm">Exit Presentation (Esc)</button>
     </div>
 

@@ -1,6 +1,6 @@
 """
 Firestore State and Memory Service for CommuniCare.
-Manages per-recipient AAC vocabulary profiles, symbol preferences, and multi-turn adaptation.
+Manages per-recipient AAC vocabulary profiles, symbol preferences, and dynamic presets.
 Supports live Google Cloud Firestore with zero-config local persistence fallback.
 """
 
@@ -14,11 +14,11 @@ from communicare.models import RecipientProfile
 
 logger = logging.getLogger("communicare.firestore")
 
-# Default profiles for demonstration and testing
+# Default profiles for initial seeding
 DEFAULT_PROFILES: Dict[str, Dict] = {
     "leo_care": {
         "recipient_id": "leo_care",
-        "name": "Leo (Age 7)",
+        "name": "Leo",
         "age_group": "child",
         "vocabulary_level": "basic",
         "max_board_cards": 6,
@@ -44,7 +44,7 @@ DEFAULT_PROFILES: Dict[str, Dict] = {
     },
     "maya_adult": {
         "recipient_id": "maya_adult",
-        "name": "Maya (Adult - Stroke Recovery)",
+        "name": "Maya",
         "age_group": "adult",
         "vocabulary_level": "intermediate",
         "max_board_cards": 8,
@@ -68,6 +68,37 @@ DEFAULT_PROFILES: Dict[str, Dict] = {
     }
 }
 
+DEFAULT_PRESETS = [
+    {
+        "id": "morning_breakfast_walk",
+        "title": "Morning Routine & Breakfast",
+        "description": "Medicine, breakfast choices, and park walk",
+        "recipient_id": "leo_care",
+        "message": "Good morning Leo! Please take your medicine with a glass of water, then eat pancakes for breakfast and we will take a walk to the park to see the dogs."
+    },
+    {
+        "id": "medical_checkin",
+        "title": "Medical & Sensory Check-in",
+        "description": "Therapy session, feeling check, and hydration",
+        "recipient_id": "maya_adult",
+        "message": "Hello Maya, the doctor will visit soon. Let me know if you feel hurt or tired, and please drink some water before we listen to quiet music."
+    },
+    {
+        "id": "school_transition",
+        "title": "School Transition & Lunch",
+        "description": "Getting dressed, riding the school bus, and lunchtime",
+        "recipient_id": "leo_care",
+        "message": "Time to put on your clothes and shoes. The yellow school bus is coming soon to take us to school. We have a lunch box with an apple and juice!"
+    },
+    {
+        "id": "evening_bedtime",
+        "title": "Evening Hygiene & Bedtime",
+        "description": "Bathroom, brushing teeth, and bedtime book",
+        "recipient_id": "leo_care",
+        "message": "It is nighttime. Let's use the bathroom, wash hands, and brush teeth. Then we can read a book in bed and go to sleep."
+    }
+]
+
 
 class FirestoreService:
     """
@@ -79,6 +110,7 @@ class FirestoreService:
         self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
         self.local_storage_dir = Path("./data")
         self.local_storage_file = self.local_storage_dir / "recipient_profiles.json"
+        self.presets_file = self.local_storage_dir / "presets.json"
         self.db = None
         self._is_live_firestore = False
         
@@ -86,7 +118,6 @@ class FirestoreService:
 
     def _init_backend(self):
         """Attempt connection to Google Cloud Firestore, fallback to local JSON engine."""
-        # Check if Google credentials or project are present
         if self.project_id and (os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.getenv("K_SERVICE")):
             try:
                 from google.cloud import firestore
@@ -102,7 +133,9 @@ class FirestoreService:
         if not self.local_storage_file.exists():
             with open(self.local_storage_file, "w", encoding="utf-8") as f:
                 json.dump(DEFAULT_PROFILES, f, indent=2)
-            logger.info("Initialized local persistent recipient memory with default profiles.")
+        if not self.presets_file.exists():
+            with open(self.presets_file, "w", encoding="utf-8") as f:
+                json.dump(DEFAULT_PRESETS, f, indent=2)
 
     def get_recipient_profile(self, recipient_id: str) -> RecipientProfile:
         """Fetch recipient profile by ID."""
@@ -115,12 +148,10 @@ class FirestoreService:
             except Exception as e:
                 logger.error(f"Error fetching from live Firestore: {e}")
 
-        # Local JSON backend lookup
         profiles = self._read_local_profiles()
         if recipient_id in profiles:
             return RecipientProfile(**profiles[recipient_id])
         
-        # Create a new profile if not found
         new_profile = RecipientProfile(
             recipient_id=recipient_id,
             name=recipient_id.replace("_", " ").title(),
@@ -142,11 +173,26 @@ class FirestoreService:
             except Exception as e:
                 logger.error(f"Error saving to live Firestore: {e}")
 
-        # Local JSON backend
         profiles = self._read_local_profiles()
         profiles[profile.recipient_id] = profile_dict
         self._write_local_profiles(profiles)
         return True
+
+    def delete_recipient_profile(self, recipient_id: str) -> bool:
+        """Delete a recipient profile."""
+        if self._is_live_firestore and self.db:
+            try:
+                self.db.collection("recipient_profiles").document(recipient_id).delete()
+                return True
+            except Exception as e:
+                logger.error(f"Error deleting from live Firestore: {e}")
+
+        profiles = self._read_local_profiles()
+        if recipient_id in profiles:
+            del profiles[recipient_id]
+            self._write_local_profiles(profiles)
+            return True
+        return False
 
     def list_recipients(self) -> List[RecipientProfile]:
         """List all available recipient profiles."""
@@ -159,6 +205,53 @@ class FirestoreService:
 
         profiles = self._read_local_profiles()
         return [RecipientProfile(**data) for data in profiles.values()]
+
+    def list_presets(self) -> List[Dict]:
+        """List all presets."""
+        if self._is_live_firestore and self.db:
+            try:
+                docs = self.db.collection("presets").stream()
+                results = [doc.to_dict() for doc in docs]
+                if results:
+                    return results
+            except Exception as e:
+                logger.error(f"Error reading presets from Firestore: {e}")
+
+        try:
+            if self.presets_file.exists():
+                with open(self.presets_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.error(f"Error reading presets file: {e}")
+        return DEFAULT_PRESETS
+
+    def save_preset(self, preset: Dict) -> bool:
+        """Save a new preset."""
+        preset_id = preset.get("id") or f"preset_{int(datetime.utcnow().timestamp())}"
+        preset["id"] = preset_id
+
+        if self._is_live_firestore and self.db:
+            try:
+                self.db.collection("presets").document(preset_id).set(preset)
+                return True
+            except Exception as e:
+                logger.error(f"Error saving preset to Firestore: {e}")
+
+        presets = self.list_presets()
+        # Update or append
+        existing = next((i for i, p in enumerate(presets) if p["id"] == preset_id), None)
+        if existing is not None:
+            presets[existing] = preset
+        else:
+            presets.append(preset)
+
+        try:
+            with open(self.presets_file, "w", encoding="utf-8") as f:
+                json.dump(presets, f, indent=2)
+            return True
+        except Exception as e:
+            logger.error(f"Error saving preset to file: {e}")
+            return False
 
     def record_interaction(
         self,
@@ -174,7 +267,6 @@ class FirestoreService:
         profile = self.get_recipient_profile(recipient_id)
         profile.last_interaction = datetime.utcnow().isoformat()
 
-        # Update learned vocabulary list
         for word in words:
             word_lower = word.lower()
             if word_lower not in profile.learned_vocabulary:
@@ -208,5 +300,4 @@ class FirestoreService:
             logger.error(f"Error writing to local profile store: {e}")
 
 
-# Singleton instance
 firestore_service = FirestoreService()
