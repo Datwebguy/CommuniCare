@@ -1,6 +1,6 @@
 /**
  * CommuniCare Interactive AAC Studio Controller
- * Multi tenant caregiver isolation, dynamic database profiles, and Web Speech audio.
+ * Multi tenant caregiver isolation, customizable voice engine, and reliable speech sequencing.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,14 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const pipelineStepsContainer = document.getElementById('pipeline-steps');
   const pipelineTimer = document.getElementById('pipeline-timer');
   const pipelineToggleHeader = document.getElementById('pipeline-toggle-header');
-  const btnToggleTrace = document.getElementById('btn-toggle-trace');
   const traceToggleText = document.getElementById('trace-toggle-text');
   const aacCardsGrid = document.getElementById('aac-cards-grid');
+  const simplifiedBanner = document.getElementById('simplified-banner');
   const simplifiedText = document.getElementById('simplified-text');
   const boardTitle = document.getElementById('board-title');
   const boardIntentBadge = document.getElementById('board-intent-badge');
   const adaptationAlert = document.getElementById('adaptation-alert');
   const btnSpeakAll = document.getElementById('btn-speak-all');
+  const btnVoiceSettings = document.getElementById('btn-voice-settings');
   const btnPrintBoard = document.getElementById('btn-print-board');
   const btnFullscreen = document.getElementById('btn-fullscreen');
   const btnMemoryView = document.getElementById('btn-memory-view');
@@ -47,12 +48,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const newProfileCards = document.getElementById('new-profile-cards');
   const newProfileNotes = document.getElementById('new-profile-notes');
 
+  // Voice Settings Modal Elements
+  const voiceModal = document.getElementById('voice-modal');
+  const btnCloseVoiceModal = document.getElementById('btn-close-voice-modal');
+  const voicePersonaSelect = document.getElementById('voice-persona-select');
+  const systemVoiceSelect = document.getElementById('system-voice-select');
+  const voicePitchRange = document.getElementById('voice-pitch-range');
+  const voicePitchLabel = document.getElementById('voice-pitch-label');
+  const voiceRateRange = document.getElementById('voice-rate-range');
+  const voiceRateLabel = document.getElementById('voice-rate-label');
+  const voiceModeSelect = document.getElementById('voice-mode-select');
+  const btnTestVoice = document.getElementById('btn-test-voice');
+  const btnSaveVoice = document.getElementById('btn-save-voice');
+
   // Application State
   let currentBoard = null;
   let currentPresets = [];
   let currentRecipients = [];
   let isGenerating = false;
   let isTraceExpanded = true;
+  let isSpeakingAll = false;
+  let systemVoices = [];
+
+  // Voice Configuration State
+  let voiceConfig = {
+    persona: 'female_adult',
+    voiceURI: null,
+    pitch: 1.05,
+    rate: 0.85,
+    mode: 'full_sentence_and_cards'
+  };
 
   // Active Caregiver ID helper
   function getActiveCaregiverId() {
@@ -63,16 +88,198 @@ document.addEventListener('DOMContentLoaded', () => {
   initApp();
 
   async function initApp() {
+    initVoiceEngine();
     await reloadCaregiverWorkspace();
     setupEventListeners();
   }
 
+  /* =========================================================================
+     VOICE & AUDIO ENGINE
+     ========================================================================= */
+  function initVoiceEngine() {
+    if (!('speechSynthesis' in window)) {
+      console.warn('Speech synthesis not supported in this browser.');
+      return;
+    }
+
+    const loadVoices = () => {
+      systemVoices = window.speechSynthesis.getVoices();
+      if (systemVoices.length > 0 && systemVoiceSelect) {
+        systemVoiceSelect.innerHTML = '<option value="">Automatic Default Voice</option>';
+        systemVoices.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.voiceURI;
+          opt.textContent = `${v.name} (${v.lang})${v.default ? ' [Default]' : ''}`;
+          systemVoiceSelect.appendChild(opt);
+        });
+      }
+    };
+
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+
+    // Load saved preferences if any
+    try {
+      const saved = localStorage.getItem('communicare_voice_config');
+      if (saved) {
+        voiceConfig = { ...voiceConfig, ...JSON.parse(saved) };
+      }
+    } catch (e) {}
+
+    updateVoiceUIFromConfig();
+  }
+
+  function updateVoiceUIFromConfig() {
+    if (voicePersonaSelect) voicePersonaSelect.value = voiceConfig.persona;
+    if (voicePitchRange) {
+      voicePitchRange.value = voiceConfig.pitch;
+      voicePitchLabel.textContent = `${Number(voiceConfig.pitch).toFixed(2)}x`;
+    }
+    if (voiceRateRange) {
+      voiceRateRange.value = voiceConfig.rate;
+      voiceRateLabel.textContent = `${Number(voiceConfig.rate).toFixed(2)}x`;
+    }
+    if (voiceModeSelect) voiceModeSelect.value = voiceConfig.mode;
+    if (systemVoiceSelect && voiceConfig.voiceURI) {
+      systemVoiceSelect.value = voiceConfig.voiceURI;
+    }
+  }
+
+  const PERSONA_PRESETS = {
+    child_friendly: { pitch: 1.40, rate: 0.85, genderHint: ['child', 'junior', 'zira', 'karen'] },
+    female_adult: { pitch: 1.05, rate: 0.88, genderHint: ['female', 'samantha', 'victoria', 'eva', 'jenny'] },
+    male_adult: { pitch: 0.85, rate: 0.85, genderHint: ['male', 'david', 'alex', 'george', 'guy'] },
+    calm_sensory: { pitch: 0.95, rate: 0.72, genderHint: ['calm', 'soft', 'female', 'natural'] },
+    expressive: { pitch: 1.25, rate: 0.98, genderHint: [] }
+  };
+
+  function applyPersonaPreset(personaKey) {
+    const preset = PERSONA_PRESETS[personaKey];
+    if (preset) {
+      voiceConfig.persona = personaKey;
+      voiceConfig.pitch = preset.pitch;
+      voiceConfig.rate = preset.rate;
+      
+      // Select appropriate matching system voice if available
+      if (preset.genderHint.length > 0 && systemVoices.length > 0) {
+        const match = systemVoices.find(v => 
+          preset.genderHint.some(h => v.name.toLowerCase().includes(h) || v.voiceURI.toLowerCase().includes(h))
+        );
+        if (match) {
+          voiceConfig.voiceURI = match.voiceURI;
+        }
+      }
+
+      updateVoiceUIFromConfig();
+    }
+  }
+
+  function getSelectedSpeechVoice() {
+    if (voiceConfig.voiceURI && systemVoices.length > 0) {
+      const found = systemVoices.find(v => v.voiceURI === voiceConfig.voiceURI);
+      if (found) return found;
+    }
+    // Fallback to first english voice or default
+    const englishVoice = systemVoices.find(v => v.lang.startsWith('en'));
+    return englishVoice || null;
+  }
+
+  function speakSingleWord(text, cardEl = null) {
+    if (!('speechSynthesis' in window)) return Promise.resolve();
+    
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const voice = getSelectedSpeechVoice();
+    if (voice) utterance.voice = voice;
+    utterance.pitch = voiceConfig.pitch;
+    utterance.rate = voiceConfig.rate;
+
+    if (cardEl) {
+      cardEl.classList.add('card-speaking');
+    }
+
+    return new Promise((resolve) => {
+      let resolved = false;
+      const finish = () => {
+        if (!resolved) {
+          resolved = true;
+          if (cardEl) cardEl.classList.remove('card-speaking');
+          resolve();
+        }
+      };
+
+      utterance.onend = finish;
+      utterance.onerror = finish;
+
+      // Failsafe timeout in case onend is dropped by browser
+      setTimeout(finish, 4000);
+
+      window.speechSynthesis.speak(utterance);
+    });
+  }
+
+  async function speakAllBoardSequence() {
+    if (!currentBoard || !currentBoard.cards || currentBoard.cards.length === 0) return;
+
+    if (isSpeakingAll) {
+      // Toggle off if currently speaking
+      window.speechSynthesis.cancel();
+      isSpeakingAll = false;
+      btnSpeakAll.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span>Speak All</span>';
+      document.querySelectorAll('.aac-card').forEach(c => c.classList.remove('card-speaking'));
+      if (simplifiedBanner) simplifiedBanner.classList.remove('box-speaking');
+      return;
+    }
+
+    isSpeakingAll = true;
+    btnSpeakAll.innerHTML = '<span>⏹️ Stop Voice</span>';
+
+    try {
+      // Step 1: Speak simplified sentence first if mode includes it
+      if (voiceConfig.mode === 'full_sentence_and_cards' || voiceConfig.mode === 'sentence_only') {
+        if (simplifiedBanner && simplifiedText) {
+          simplifiedBanner.classList.add('box-speaking');
+          await speakSingleWord(simplifiedText.textContent);
+          simplifiedBanner.classList.remove('box-speaking');
+          await new Promise(r => setTimeout(r, 400));
+        }
+      }
+
+      if (voiceConfig.mode === 'sentence_only') {
+        isSpeakingAll = false;
+        btnSpeakAll.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span>Speak All</span>';
+        return;
+      }
+
+      // Step 2: Read through 100% of the cards in the grid sequentially
+      const cardElements = document.querySelectorAll('.aac-card');
+      for (let i = 0; i < currentBoard.cards.length; i++) {
+        if (!isSpeakingAll) break; // Check if cancelled
+
+        const card = currentBoard.cards[i];
+        const cardEl = cardElements[i];
+
+        await speakSingleWord(card.word, cardEl);
+        await new Promise(r => setTimeout(r, 250));
+      }
+    } finally {
+      isSpeakingAll = false;
+      btnSpeakAll.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span>Speak All</span>';
+      document.querySelectorAll('.aac-card').forEach(c => c.classList.remove('card-speaking'));
+      if (simplifiedBanner) simplifiedBanner.classList.remove('box-speaking');
+    }
+  }
+
+  /* =========================================================================
+     WORKSPACE & DATA LOADING
+     ========================================================================= */
   async function reloadCaregiverWorkspace(selectedRecipientId = null) {
     await loadRecipients(selectedRecipientId);
     await loadPresets();
   }
 
-  // Dynamically load recipient profiles from Firestore for active caregiver
   async function loadRecipients(selectedId = null) {
     const cid = getActiveCaregiverId();
     try {
@@ -108,7 +315,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Dynamically load presets from database for active caregiver
   async function loadPresets() {
     const cid = getActiveCaregiverId();
     try {
@@ -151,6 +357,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* =========================================================================
+     EVENT LISTENERS
+     ========================================================================= */
   function setupEventListeners() {
     // Caregiver Account Switcher
     if (caregiverSelect) {
@@ -171,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    btnSpeakAll.addEventListener('click', () => speakAllCards());
+    btnSpeakAll.addEventListener('click', () => speakAllBoardSequence());
     btnPrintBoard.addEventListener('click', () => window.print());
     btnFullscreen.addEventListener('click', () => togglePresentationMode(true));
     btnExitPresentation.addEventListener('click', () => togglePresentationMode(false));
@@ -186,6 +395,63 @@ document.addEventListener('DOMContentLoaded', () => {
         pipelineStepsContainer.classList.add('hidden');
         traceToggleText.textContent = 'View Details';
       }
+    });
+
+    // Voice Modal Controls
+    btnVoiceSettings.addEventListener('click', () => {
+      updateVoiceUIFromConfig();
+      voiceModal.classList.remove('hidden');
+    });
+
+    btnCloseVoiceModal.addEventListener('click', () => {
+      voiceModal.classList.add('hidden');
+    });
+
+    voiceModal.addEventListener('click', (e) => {
+      if (e.target === voiceModal) voiceModal.classList.add('hidden');
+    });
+
+    voicePersonaSelect.addEventListener('change', (e) => {
+      if (e.target.value !== 'custom') {
+        applyPersonaPreset(e.target.value);
+      } else {
+        voiceConfig.persona = 'custom';
+      }
+    });
+
+    systemVoiceSelect.addEventListener('change', (e) => {
+      voiceConfig.voiceURI = e.target.value || null;
+      voiceConfig.persona = 'custom';
+      voicePersonaSelect.value = 'custom';
+    });
+
+    voicePitchRange.addEventListener('input', (e) => {
+      voiceConfig.pitch = parseFloat(e.target.value);
+      voicePitchLabel.textContent = `${voiceConfig.pitch.toFixed(2)}x`;
+      voiceConfig.persona = 'custom';
+      voicePersonaSelect.value = 'custom';
+    });
+
+    voiceRateRange.addEventListener('input', (e) => {
+      voiceConfig.rate = parseFloat(e.target.value);
+      voiceRateLabel.textContent = `${voiceConfig.rate.toFixed(2)}x`;
+      voiceConfig.persona = 'custom';
+      voicePersonaSelect.value = 'custom';
+    });
+
+    voiceModeSelect.addEventListener('change', (e) => {
+      voiceConfig.mode = e.target.value;
+    });
+
+    btnTestVoice.addEventListener('click', () => {
+      speakSingleWord('Hello! CommuniCare is ready with your selected voice tone.');
+    });
+
+    btnSaveVoice.addEventListener('click', () => {
+      try {
+        localStorage.setItem('communicare_voice_config', JSON.stringify(voiceConfig));
+      } catch (e) {}
+      voiceModal.classList.add('hidden');
     });
 
     // Memory Modal
@@ -261,6 +527,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* =========================================================================
+     BOARD GENERATION & RENDERING
+     ========================================================================= */
   async function handleGenerateBoard(customMessage = null, customRecipient = null) {
     const rawMessage = customMessage || caregiverMessageInput.value.trim();
     const recipientId = customRecipient || recipientSelect.value;
@@ -430,39 +699,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.aac-card').forEach(cardEl => {
       cardEl.addEventListener('click', () => {
         const word = cardEl.getAttribute('data-word');
-        speakWord(word);
-        
-        cardEl.style.transform = 'scale(1.04)';
-        setTimeout(() => { cardEl.style.transform = ''; }, 200);
+        speakSingleWord(word, cardEl);
       });
     });
-  }
-
-  function speakWord(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1.0;
-    window.speechSynthesis.speak(utterance);
-  }
-
-  async function speakAllCards() {
-    if (!currentBoard || !currentBoard.cards) return;
-    const cards = document.querySelectorAll('.aac-card');
-    for (let i = 0; i < currentBoard.cards.length; i++) {
-      const card = currentBoard.cards[i];
-      const cardEl = cards[i];
-      
-      if (cardEl) {
-        cardEl.style.boxShadow = '0 0 0 4px #421d24';
-      }
-      speakWord(card.word);
-      await new Promise(r => setTimeout(r, 950));
-      if (cardEl) {
-        cardEl.style.boxShadow = '';
-      }
-    }
   }
 
   window.handleFeedback = async function(boardId, recipientId, cardId, word, action) {

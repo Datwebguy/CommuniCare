@@ -33,11 +33,11 @@
       </div>
 
       <!-- Multi Tenant Caregiver Account & Recipient Profile Selector -->
-      <div style="display:flex; align-items:center; gap:0.75rem;">
+      <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
         
         <!-- Active Caregiver Selector -->
         <div class="header-recipient-selector" title="Active Caregiver Account (Data is private and isolated)">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Caregiver:</span>
+          <span style="font-size:0.75rem; font-weight:700; color:var(--color-stone-gray);">Caregiver:</span>
           <select id="caregiver-select" class="header-select">
             <option value="caregiver_primary">Dr. Sarah Jenkins</option>
             <option value="caregiver_clinic">Riverdale Therapy Center</option>
@@ -119,9 +119,13 @@
           </div>
 
           <div class="board-toolbar-actions">
-            <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence">
+            <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence and message aloud">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-              Speak All
+              <span>Speak All</span>
+            </button>
+            <button id="btn-voice-settings" class="btn btn-secondary btn-sm" title="Configure voice gender, tone, pitch, and speed">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <span>Voice Settings</span>
             </button>
             <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical AAC communication sheet">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -227,6 +231,70 @@
       </section>
 
     </main>
+
+    <!-- Modal: Voice & Audio Customization -->
+    <div id="voice-modal" class="modal-backdrop hidden">
+      <div class="modal-container" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Voice & Audio Settings</h2>
+          <button id="btn-close-voice-modal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="voice-persona-select" class="form-label">Voice Persona & Tone:</label>
+            <select id="voice-persona-select" class="form-select">
+              <option value="child_friendly">🧒 Child Friendly (Warm, High Tone)</option>
+              <option value="female_adult" selected>👩 Female Adult (Natural, Gentle)</option>
+              <option value="male_adult">👨 Male Adult (Grounded, Clear)</option>
+              <option value="calm_sensory">🌿 Gentle & Calm (Slow Pace, Soft)</option>
+              <option value="expressive">✨ Expressive (Enthusiastic Tone)</option>
+              <option value="custom">⚙️ Custom System Voice</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="system-voice-select" class="form-label">Browser TTS Voice:</label>
+            <select id="system-voice-select" class="form-select">
+              <option value="">Default System Voice</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label for="voice-pitch-range" class="form-label">Voice Pitch (Tone):</label>
+              <span id="voice-pitch-label" style="font-size:0.75rem; font-weight:700; color:var(--color-royal-violet);">1.0x</span>
+            </div>
+            <input type="range" id="voice-pitch-range" min="0.5" max="1.8" step="0.05" value="1.0" class="voice-slider" />
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label for="voice-rate-range" class="form-label">Speaking Rate (Speed):</label>
+              <span id="voice-rate-label" style="font-size:0.75rem; font-weight:700; color:var(--color-royal-violet);">0.85x</span>
+            </div>
+            <input type="range" id="voice-rate-range" min="0.5" max="1.4" step="0.05" value="0.85" class="voice-slider" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Speak All Mode:</label>
+            <select id="voice-mode-select" class="form-select">
+              <option value="full_sentence_and_cards" selected>Speak Plain Sentence + Read Each Card</option>
+              <option value="cards_only">Read Cards in Sequence Only</option>
+              <option value="sentence_only">Speak Plain Sentence Only</option>
+            </select>
+          </div>
+
+          <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
+            <button id="btn-test-voice" type="button" class="btn btn-secondary" style="flex:1;">
+              <span>🔊 Preview Voice</span>
+            </button>
+            <button id="btn-save-voice" type="button" class="btn btn-primary" style="flex:1;">
+              <span>Apply Voice</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal: Recipient Memory & Firestore Inspector -->
     <div id="memory-modal" class="modal-backdrop hidden">
