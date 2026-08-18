@@ -1,6 +1,6 @@
 """
-Autonomous Agent Pipeline for CommuniCare (Taskmaster Track).
-Orchestrates end-to-end message simplification, memory retrieval, symbol reasoning,
+Autonomous Agent Pipeline for CommuniCare.
+Orchestrates end to end message simplification, memory retrieval, symbol reasoning,
 board assembly, and persistent state updates.
 """
 
@@ -27,8 +27,8 @@ logger = logging.getLogger("communicare.agent")
 
 class CommuniCareAgent:
     """
-    Taskmaster Autonomous Agent that takes a complex caregiver message
-    and produces an accessible, high-contrast AAC picture symbol board.
+    Autonomous Agent that takes a complex caregiver message
+    and produces an accessible, high contrast AAC picture symbol board.
     """
 
     def __init__(self):
@@ -38,27 +38,31 @@ class CommuniCareAgent:
 
     def process_caregiver_message(self, request: CaregiverMessageRequest) -> AACBoardResponse:
         """
-        Executes the autonomous 5-step Taskmaster agent pipeline:
-        1. Context & Profile Retrieval (Firestore)
-        2. Natural Language Simplification & Concept Extraction (Gemini 2.5/3.5 Flash)
-        3. Symbol Resolution & Preference Alignment (ARASAAC / AAC Library)
-        4. High-Contrast Board Assembly & Fitzgerald Key Categorization
-        5. Memory Update & Interaction Logging (Firestore)
+        Executes the autonomous 5 step agent pipeline:
+        1. Context and Profile Retrieval (Firestore)
+        2. Natural Language Simplification and Concept Extraction (Gemini 2.5 Flash)
+        3. Symbol Resolution and Preference Alignment (ARASAAC / AAC Library)
+        4. High Contrast Board Assembly and Fitzgerald Key Categorization
+        5. Memory Update and Interaction Logging (Firestore)
         """
         board_id = f"board_{uuid.uuid4().hex[:8]}"
         trace: List[PipelineStepTrace] = []
         adaptations: List[str] = []
+        caregiver_id = request.caregiver_id or "caregiver_primary"
 
         # =========================================================================
-        # STEP 1: Recipient Profile & State Retrieval
+        # STEP 1: Recipient Profile and State Retrieval
         # =========================================================================
         t0 = time.perf_counter()
-        profile: RecipientProfile = self.firestore.get_recipient_profile(request.recipient_id)
+        profile: RecipientProfile = self.firestore.get_recipient_profile(
+            recipient_id=request.recipient_id,
+            caregiver_id=caregiver_id
+        )
         duration_step1 = (time.perf_counter() - t0) * 1000
 
         trace.append(PipelineStepTrace(
             step_number=1,
-            step_name="Profile & Memory Lookup",
+            step_name="Profile and Memory Lookup",
             description=f"Retrieved persistent profile for {profile.name} from Firestore",
             status="completed",
             input_summary=f"Recipient ID: {request.recipient_id}",
@@ -68,7 +72,7 @@ class CommuniCareAgent:
         ))
 
         # =========================================================================
-        # STEP 2: Gemini Language Simplification & Reasoning
+        # STEP 2: Gemini Language Simplification and Reasoning
         # =========================================================================
         t1 = time.perf_counter()
         simplification = self.gemini.simplify_and_extract_concepts(
@@ -90,7 +94,7 @@ class CommuniCareAgent:
         ))
 
         # =========================================================================
-        # STEP 3: Symbol Resolution & Disambiguation
+        # STEP 3: Symbol Resolution and Disambiguation
         # =========================================================================
         t2 = time.perf_counter()
         resolved_cards: List[SymbolCard] = []
@@ -123,16 +127,14 @@ class CommuniCareAgent:
             status="fallback" if fallback_count > 0 else "completed",
             input_summary=f"Resolving {len(simplification.concepts)} concepts",
             output_summary=f"{len(resolved_cards) - fallback_count} visual symbols resolved, {fallback_count} graceful text fallbacks",
-            reasoning="Applied open-license ARASAAC mappings and local high-contrast SVGs. Fallback activated for uncatalogued terms.",
+            reasoning="Applied open license ARASAAC mappings and local high contrast SVGs. Fallback activated for uncatalogued terms.",
             duration_ms=round(duration_step3, 2)
         ))
 
         # =========================================================================
-        # STEP 4: High-Contrast Board Layout & Color Composition
+        # STEP 4: High Contrast Board Layout and Color Composition
         # =========================================================================
         t3 = time.perf_counter()
-        # Sort cards into logical AAC Fitzgerald sequence:
-        # Time -> People -> Verbs -> Nouns -> Social/Feelings
         CATEGORY_ORDER = {
             GrammarCategory.TIME_SCHEDULE: 1,
             GrammarCategory.PEOPLE: 2,
@@ -147,23 +149,24 @@ class CommuniCareAgent:
 
         trace.append(PipelineStepTrace(
             step_number=4,
-            step_name="Board Layout & Fitzgerald Composition",
-            description="Assembled high-contrast grid with AAC color coding and audio hints",
+            step_name="Board Layout and Fitzgerald Composition",
+            description="Assembled high contrast grid with AAC color coding and audio hints",
             status="completed",
             input_summary=f"{len(resolved_cards)} cards",
-            output_summary=f"Structured {len(resolved_cards)}-card AAC board ready for recipient",
+            output_summary=f"Structured {len(resolved_cards)} card AAC board ready for recipient",
             reasoning="Arranged cards by clinical Fitzgerald Key order for maximum cognitive clarity.",
             duration_ms=round(duration_step4, 2)
         ))
 
         # =========================================================================
-        # STEP 5: State Persistence & Profile Learning
+        # STEP 5: State Persistence and Profile Learning
         # =========================================================================
         t4 = time.perf_counter()
         self.firestore.record_interaction(
             recipient_id=profile.recipient_id,
             words=words_for_memory,
-            action="used"
+            action="used",
+            caregiver_id=caregiver_id
         )
         duration_step5 = (time.perf_counter() - t4) * 1000
 
@@ -181,6 +184,7 @@ class CommuniCareAgent:
         return AACBoardResponse(
             board_id=board_id,
             recipient_id=profile.recipient_id,
+            caregiver_id=caregiver_id,
             recipient_name=profile.name,
             original_message=request.message,
             simplified_message=simplification.simplified_message,

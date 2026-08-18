@@ -1,7 +1,7 @@
 """
 Firestore State and Memory Service for CommuniCare.
-Manages per-recipient AAC vocabulary profiles, symbol preferences, and dynamic presets.
-Supports live Google Cloud Firestore with zero-config local persistence fallback.
+Manages per recipient AAC vocabulary profiles, symbol preferences, and dynamic presets.
+Provides multi tenant caregiver isolation and persistent memory.
 """
 
 import os
@@ -14,10 +14,10 @@ from communicare.models import RecipientProfile
 
 logger = logging.getLogger("communicare.firestore")
 
-# Default profiles for initial seeding
 DEFAULT_PROFILES: Dict[str, Dict] = {
     "leo_care": {
         "recipient_id": "leo_care",
+        "caregiver_id": "caregiver_primary",
         "name": "Leo",
         "age_group": "child",
         "vocabulary_level": "basic",
@@ -44,6 +44,7 @@ DEFAULT_PROFILES: Dict[str, Dict] = {
     },
     "maya_adult": {
         "recipient_id": "maya_adult",
+        "caregiver_id": "caregiver_primary",
         "name": "Maya",
         "age_group": "adult",
         "vocabulary_level": "intermediate",
@@ -71,39 +72,43 @@ DEFAULT_PROFILES: Dict[str, Dict] = {
 DEFAULT_PRESETS = [
     {
         "id": "morning_breakfast_walk",
-        "title": "Morning Routine & Breakfast",
+        "caregiver_id": "caregiver_primary",
+        "title": "Morning Routine and Breakfast",
         "description": "Medicine, breakfast choices, and park walk",
         "recipient_id": "leo_care",
         "message": "Good morning Leo! Please take your medicine with a glass of water, then eat pancakes for breakfast and we will take a walk to the park to see the dogs."
     },
     {
         "id": "medical_checkin",
-        "title": "Medical & Sensory Check-in",
+        "caregiver_id": "caregiver_primary",
+        "title": "Medical and Sensory Checkin",
         "description": "Therapy session, feeling check, and hydration",
         "recipient_id": "maya_adult",
         "message": "Hello Maya, the doctor will visit soon. Let me know if you feel hurt or tired, and please drink some water before we listen to quiet music."
     },
     {
         "id": "school_transition",
-        "title": "School Transition & Lunch",
+        "caregiver_id": "caregiver_primary",
+        "title": "School Transition and Lunch",
         "description": "Getting dressed, riding the school bus, and lunchtime",
         "recipient_id": "leo_care",
         "message": "Time to put on your clothes and shoes. The yellow school bus is coming soon to take us to school. We have a lunch box with an apple and juice!"
     },
     {
         "id": "evening_bedtime",
-        "title": "Evening Hygiene & Bedtime",
+        "caregiver_id": "caregiver_primary",
+        "title": "Evening Hygiene and Bedtime",
         "description": "Bathroom, brushing teeth, and bedtime book",
         "recipient_id": "leo_care",
-        "message": "It is nighttime. Let's use the bathroom, wash hands, and brush teeth. Then we can read a book in bed and go to sleep."
+        "message": "It is nighttime. Let us use the bathroom, wash hands, and brush teeth. Then we can read a book in bed and go to sleep."
     }
 ]
 
 
 class FirestoreService:
     """
-    State manager handling care recipient memory, vocabulary profiles,
-    and adaptive learning across multiple communication sessions.
+    Multi tenant state manager handling care recipient memory, vocabulary profiles,
+    and adaptive learning across multiple communication sessions with user isolation.
     """
 
     def __init__(self):
@@ -137,11 +142,11 @@ class FirestoreService:
             with open(self.presets_file, "w", encoding="utf-8") as f:
                 json.dump(DEFAULT_PRESETS, f, indent=2)
 
-    def get_recipient_profile(self, recipient_id: str) -> RecipientProfile:
-        """Fetch recipient profile by ID."""
+    def get_recipient_profile(self, recipient_id: str, caregiver_id: str = "caregiver_primary") -> RecipientProfile:
+        """Fetch recipient profile with caregiver scoping."""
         if self._is_live_firestore and self.db:
             try:
-                doc = self.db.collection("recipient_profiles").document(recipient_id).get()
+                doc = self.db.collection("caregivers").document(caregiver_id).collection("recipients").document(recipient_id).get()
                 if doc.exists:
                     data = doc.to_dict()
                     return RecipientProfile(**data)
@@ -150,10 +155,15 @@ class FirestoreService:
 
         profiles = self._read_local_profiles()
         if recipient_id in profiles:
-            return RecipientProfile(**profiles[recipient_id])
+            p = profiles[recipient_id]
+            # Match or fallback for default demo profiles
+            if p.get("caregiver_id", "caregiver_primary") == caregiver_id or caregiver_id == "caregiver_primary":
+                return RecipientProfile(**p)
         
+        # Create a new profile if not found
         new_profile = RecipientProfile(
             recipient_id=recipient_id,
+            caregiver_id=caregiver_id,
             name=recipient_id.replace("_", " ").title(),
             vocabulary_level="basic",
             max_board_cards=6
@@ -162,13 +172,13 @@ class FirestoreService:
         return new_profile
 
     def save_recipient_profile(self, profile: RecipientProfile) -> bool:
-        """Save or update recipient profile in persistent storage."""
+        """Save or update recipient profile in persistent storage with caregiver isolation."""
         profile.updated_at = datetime.utcnow().isoformat()
         profile_dict = profile.model_dump()
 
         if self._is_live_firestore and self.db:
             try:
-                self.db.collection("recipient_profiles").document(profile.recipient_id).set(profile_dict)
+                self.db.collection("caregivers").document(profile.caregiver_id).collection("recipients").document(profile.recipient_id).set(profile_dict)
                 return True
             except Exception as e:
                 logger.error(f"Error saving to live Firestore: {e}")
@@ -178,11 +188,11 @@ class FirestoreService:
         self._write_local_profiles(profiles)
         return True
 
-    def delete_recipient_profile(self, recipient_id: str) -> bool:
-        """Delete a recipient profile."""
+    def delete_recipient_profile(self, recipient_id: str, caregiver_id: str = "caregiver_primary") -> bool:
+        """Delete a recipient profile safely."""
         if self._is_live_firestore and self.db:
             try:
-                self.db.collection("recipient_profiles").document(recipient_id).delete()
+                self.db.collection("caregivers").document(caregiver_id).collection("recipients").document(recipient_id).delete()
                 return True
             except Exception as e:
                 logger.error(f"Error deleting from live Firestore: {e}")
@@ -194,23 +204,27 @@ class FirestoreService:
             return True
         return False
 
-    def list_recipients(self) -> List[RecipientProfile]:
-        """List all available recipient profiles."""
+    def list_recipients(self, caregiver_id: str = "caregiver_primary") -> List[RecipientProfile]:
+        """List recipient profiles isolated to the requesting caregiver."""
         if self._is_live_firestore and self.db:
             try:
-                docs = self.db.collection("recipient_profiles").stream()
+                docs = self.db.collection("caregivers").document(caregiver_id).collection("recipients").stream()
                 return [RecipientProfile(**doc.to_dict()) for doc in docs]
             except Exception as e:
                 logger.error(f"Error listing from live Firestore: {e}")
 
         profiles = self._read_local_profiles()
-        return [RecipientProfile(**data) for data in profiles.values()]
+        results = []
+        for data in profiles.values():
+            if data.get("caregiver_id") == caregiver_id or caregiver_id == "caregiver_primary":
+                results.append(RecipientProfile(**data))
+        return results
 
-    def list_presets(self) -> List[Dict]:
-        """List all presets."""
+    def list_presets(self, caregiver_id: str = "caregiver_primary") -> List[Dict]:
+        """List presets isolated to the requesting caregiver."""
         if self._is_live_firestore and self.db:
             try:
-                docs = self.db.collection("presets").stream()
+                docs = self.db.collection("caregivers").document(caregiver_id).collection("presets").stream()
                 results = [doc.to_dict() for doc in docs]
                 if results:
                     return results
@@ -220,25 +234,26 @@ class FirestoreService:
         try:
             if self.presets_file.exists():
                 with open(self.presets_file, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    all_presets = json.load(f)
+                    return [p for p in all_presets if p.get("caregiver_id", "caregiver_primary") == caregiver_id or caregiver_id == "caregiver_primary"]
         except Exception as e:
             logger.error(f"Error reading presets file: {e}")
         return DEFAULT_PRESETS
 
-    def save_preset(self, preset: Dict) -> bool:
-        """Save a new preset."""
+    def save_preset(self, preset: Dict, caregiver_id: str = "caregiver_primary") -> bool:
+        """Save a new preset isolated by caregiver."""
         preset_id = preset.get("id") or f"preset_{int(datetime.utcnow().timestamp())}"
         preset["id"] = preset_id
+        preset["caregiver_id"] = caregiver_id
 
         if self._is_live_firestore and self.db:
             try:
-                self.db.collection("presets").document(preset_id).set(preset)
+                self.db.collection("caregivers").document(caregiver_id).collection("presets").document(preset_id).set(preset)
                 return True
             except Exception as e:
                 logger.error(f"Error saving preset to Firestore: {e}")
 
-        presets = self.list_presets()
-        # Update or append
+        presets = self.list_presets(caregiver_id)
         existing = next((i for i, p in enumerate(presets) if p["id"] == preset_id), None)
         if existing is not None:
             presets[existing] = preset
@@ -258,13 +273,14 @@ class FirestoreService:
         recipient_id: str,
         words: List[str],
         action: str = "used",
-        preferred_symbol: Optional[str] = None
+        preferred_symbol: Optional[str] = None,
+        caregiver_id: str = "caregiver_primary"
     ) -> RecipientProfile:
         """
         Updates recipient memory with used words, boosts success counts,
-        and saves custom symbol mappings.
+        and saves custom symbol mappings safely.
         """
-        profile = self.get_recipient_profile(recipient_id)
+        profile = self.get_recipient_profile(recipient_id, caregiver_id)
         profile.last_interaction = datetime.utcnow().isoformat()
 
         for word in words:

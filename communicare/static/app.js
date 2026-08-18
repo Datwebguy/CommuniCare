@@ -1,10 +1,11 @@
 /**
- * CommuniCare: Interactive Frontend & Autonomous Pipeline Visualizer
- * Fully dynamic database-driven profiles, presets, live ARASAAC pictograms, and Web Speech audio.
+ * CommuniCare Interactive AAC Studio Controller
+ * Multi tenant caregiver isolation, dynamic database profiles, and Web Speech audio.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
+  const caregiverSelect = document.getElementById('caregiver-select');
   const caregiverMessageInput = document.getElementById('caregiver-message');
   const recipientSelect = document.getElementById('recipient-select');
   const btnAddProfile = document.getElementById('btn-add-profile');
@@ -53,19 +54,31 @@ document.addEventListener('DOMContentLoaded', () => {
   let isGenerating = false;
   let isTraceExpanded = true;
 
+  // Active Caregiver ID helper
+  function getActiveCaregiverId() {
+    return caregiverSelect ? caregiverSelect.value : 'caregiver_primary';
+  }
+
   // Initialize
   initApp();
 
   async function initApp() {
-    await loadRecipients();
-    await loadPresets();
+    await reloadCaregiverWorkspace();
     setupEventListeners();
   }
 
-  // Dynamically load recipient profiles from Firestore
+  async function reloadCaregiverWorkspace(selectedRecipientId = null) {
+    await loadRecipients(selectedRecipientId);
+    await loadPresets();
+  }
+
+  // Dynamically load recipient profiles from Firestore for active caregiver
   async function loadRecipients(selectedId = null) {
+    const cid = getActiveCaregiverId();
     try {
-      const res = await fetch('/api/recipients');
+      const res = await fetch(`/api/recipients?caregiver_id=${encodeURIComponent(cid)}`, {
+        headers: { 'X-Caregiver-ID': cid }
+      });
       if (res.ok) {
         currentRecipients = await res.json();
         renderRecipientSelect(selectedId);
@@ -78,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderRecipientSelect(selectedId = null) {
     recipientSelect.innerHTML = '';
     if (currentRecipients.length === 0) {
-      recipientSelect.innerHTML = '<option value="">No recipients found</option>';
+      recipientSelect.innerHTML = '<option value="">No recipients in workspace</option>';
       return;
     }
 
@@ -95,10 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Dynamically load presets from database
+  // Dynamically load presets from database for active caregiver
   async function loadPresets() {
+    const cid = getActiveCaregiverId();
     try {
-      const res = await fetch('/api/presets');
+      const res = await fetch(`/api/presets?caregiver_id=${encodeURIComponent(cid)}`, {
+        headers: { 'X-Caregiver-ID': cid }
+      });
       if (res.ok) {
         currentPresets = await res.json();
         renderPresets();
@@ -136,6 +152,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setupEventListeners() {
+    // Caregiver Account Switcher
+    if (caregiverSelect) {
+      caregiverSelect.addEventListener('change', () => {
+        reloadCaregiverWorkspace();
+      });
+    }
+
     btnGenerate.addEventListener('click', () => handleGenerateBoard());
     
     // Quick sample button in empty state
@@ -191,9 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = newProfileName.value.trim();
       if (!name) return;
 
+      const cid = getActiveCaregiverId();
       const recipientId = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.floor(Math.random() * 1000);
       const newProfile = {
         recipient_id: recipientId,
+        caregiver_id: cid,
         name: name,
         age_group: newProfileAge.value,
         vocabulary_level: newProfileVocab.value,
@@ -209,21 +234,24 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const res = await fetch('/api/recipients', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Caregiver-ID': cid
+          },
           body: JSON.stringify(newProfile)
         });
         if (res.ok) {
           addProfileModal.classList.add('hidden');
           await loadRecipients(recipientId);
-          alert(`Profile for '${name}' created successfully in Firestore!`);
+          alert(`Profile for '${name}' created successfully in Firestore.`);
         }
       } catch (err) {
         alert(`Failed to save profile: ${err.message}`);
       }
     });
 
-    // 2-Turn Adaptive Demo Showcase
-    btnDemoTour.addEventListener('click', () => runTwoTurnAdaptiveDemo());
+    // Multi Turn Adaptive Demonstration
+    btnDemoTour.addEventListener('click', () => runAdaptiveDemo());
 
     // Keyboard navigation (Esc to exit fullscreen)
     document.addEventListener('keydown', (e) => {
@@ -237,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawMessage = customMessage || caregiverMessageInput.value.trim();
     const recipientId = customRecipient || recipientSelect.value;
     const style = styleSelect.value;
+    const cid = getActiveCaregiverId();
 
     if (!rawMessage) {
       alert('Please enter or select a caregiver message first.');
@@ -260,10 +289,14 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch('/api/generate-board', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Caregiver-ID': cid
+        },
         body: JSON.stringify({
           message: rawMessage,
           recipient_id: recipientId,
+          caregiver_id: cid,
           simplify_style: style
         })
       });
@@ -327,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="step-info">
             <div class="step-title">
               ${step.step_name} 
-              <span style="font-size:0.68rem; color:var(--brand-primary); font-weight:800; margin-left:4px;">(${step.duration_ms}ms)</span>
+              <span style="font-size:0.68rem; color:var(--color-royal-violet); font-weight:800; margin-left:4px;">(${step.duration_ms}ms)</span>
             </div>
             <div class="step-desc">${step.output_summary || step.description}</div>
           </div>
@@ -422,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardEl = cards[i];
       
       if (cardEl) {
-        cardEl.style.boxShadow = '0 0 0 4px #2563EB';
+        cardEl.style.boxShadow = '0 0 0 4px #421d24';
       }
       speakWord(card.word);
       await new Promise(r => setTimeout(r, 950));
@@ -433,13 +466,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.handleFeedback = async function(boardId, recipientId, cardId, word, action) {
+    const cid = getActiveCaregiverId();
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Caregiver-ID': cid
+        },
         body: JSON.stringify({
           board_id: boardId,
           recipient_id: recipientId,
+          caregiver_id: cid,
           card_id: cardId,
           word: word,
           action: action
@@ -467,10 +505,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function openMemoryModal() {
     const recipientId = recipientSelect.value;
+    const cid = getActiveCaregiverId();
     if (!recipientId) return;
 
     try {
-      const res = await fetch(`/api/recipients/${recipientId}`);
+      const res = await fetch(`/api/recipients/${recipientId}?caregiver_id=${encodeURIComponent(cid)}`, {
+        headers: { 'X-Caregiver-ID': cid }
+      });
       if (res.ok) {
         const profile = await res.json();
         renderMemoryModal(profile);
@@ -487,14 +528,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderMemoryModal(profile) {
     memoryProfileSummary.innerHTML = `
-      <strong style="color:var(--text-primary); font-size:1rem;">${profile.name}</strong> (${profile.age_group.toUpperCase()}) &bull; 
-      Vocabulary Level: <span style="color:var(--brand-primary); font-weight:700;">${profile.vocabulary_level.toUpperCase()}</span> &bull; 
+      <strong style="color:var(--color-ink-charcoal); font-size:1rem;">${profile.name}</strong> (${profile.age_group.toUpperCase()}) &bull; 
+      Vocabulary Level: <span style="color:var(--color-royal-violet); font-weight:700;">${profile.vocabulary_level.toUpperCase()}</span> &bull; 
       Max Board Cards: <strong>${profile.max_board_cards}</strong><br/>
       <div style="margin-top:6px;"><em>Caregiver Notes:</em> ${profile.caregiver_notes || 'None recorded.'}</div>
     `;
 
     if (!profile.learned_vocabulary || profile.learned_vocabulary.length === 0) {
-      learnedVocabCloud.innerHTML = '<div style="color:var(--text-secondary); font-size:0.8rem;">No learned words recorded yet. Generate boards to build memory!</div>';
+      learnedVocabCloud.innerHTML = '<div style="color:var(--color-stone-gray); font-size:0.8rem;">No learned words recorded yet. Generate boards to build memory.</div>';
     } else {
       learnedVocabCloud.innerHTML = profile.learned_vocabulary.map(word => {
         const count = (profile.success_history && profile.success_history[word]) || 1;
@@ -509,19 +550,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const prefs = Object.entries(profile.preferred_symbol_mappings || {});
     if (prefs.length === 0) {
-      symbolPrefList.innerHTML = '<div style="color:var(--text-secondary); font-size:0.8rem;">No custom symbol overrides yet.</div>';
+      symbolPrefList.innerHTML = '<div style="color:var(--color-stone-gray); font-size:0.8rem;">No custom symbol overrides yet.</div>';
     } else {
       symbolPrefList.innerHTML = prefs.map(([k, v]) => `
         <div class="pref-item">
           <span><strong>${k.toUpperCase()}</strong></span>
-          <span style="color:var(--brand-primary); font-weight:700;">Icon: ${v}</span>
+          <span style="color:var(--color-royal-violet); font-weight:700;">Icon: ${v}</span>
         </div>
       `).join('');
     }
   }
 
-  async function runTwoTurnAdaptiveDemo() {
-    alert("Starting 2-Turn Adaptive Memory Demonstration:\n\nTurn 1: CommuniCare processes a morning routine message.\nFeedback: Caregiver reinforces 'medicine' & 'pancakes'.\nTurn 2: CommuniCare processes an afternoon reminder and automatically applies learned Firestore preferences!");
+  async function runAdaptiveDemo() {
+    alert("Adaptive Memory Demonstration:\n\nTurn 1: CommuniCare processes a morning routine message.\nFeedback: Caregiver reinforces 'medicine' and 'pancakes'.\nTurn 2: CommuniCare processes an afternoon reminder and automatically applies learned Firestore preferences.");
 
     if (currentRecipients.some(r => r.recipient_id === 'leo_care')) {
       recipientSelect.value = 'leo_care';
@@ -532,10 +573,14 @@ document.addEventListener('DOMContentLoaded', () => {
     await new Promise(r => setTimeout(r, 1800));
     await fetch('/api/feedback', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Caregiver-ID': getActiveCaregiverId()
+      },
       body: JSON.stringify({
         board_id: currentBoard ? currentBoard.board_id : 'demo',
         recipient_id: recipientSelect.value,
+        caregiver_id: getActiveCaregiverId(),
         word: 'medicine',
         action: 'worked_well',
         preferred_symbol: 'medicine'

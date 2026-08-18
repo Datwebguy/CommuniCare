@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CommuniCare | Autonomous AAC Picture Symbol Board Agent</title>
-  <meta name="description" content="CommuniCare autonomously converts everyday caregiver messages into simple plain language and high-contrast AAC picture symbol boards for nonverbal individuals.">
+  <title>CommuniCare | Autonomous AAC Picture Symbol Board Studio</title>
+  <meta name="description" content="CommuniCare autonomously converts everyday caregiver messages into simple plain language and high contrast AAC picture symbol boards for nonverbal individuals.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;460;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -16,30 +16,44 @@
     <!-- Top Navigation Header -->
     <header class="app-header">
       <div class="header-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1.5" />
-            <rect x="14" y="3" width="7" height="7" rx="1.5" />
-            <rect x="3" y="14" width="7" height="7" rx="1.5" />
-            <rect x="14" y="14" width="7" height="7" rx="1.5" />
-          </svg>
-        </div>
-        <a href="/" style="text-decoration:none;" title="Go to Landing Page & Overview">
+        <a href="/" style="display:flex; align-items:center; gap:0.6rem; text-decoration:none;" title="CommuniCare Home">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+            </svg>
+          </div>
           <div class="brand-titles">
             <h1 class="brand-name">CommuniCare</h1>
-            <span class="brand-tagline">Autonomous AAC Picture Board Generator</span>
+            <span class="brand-tagline">Autonomous AAC Picture Board Studio</span>
           </div>
         </a>
       </div>
 
-      <!-- Recipient Profile Selector Chip (Dynamically populated from Firestore) -->
-      <div class="header-recipient-selector">
-        <label for="recipient-select" class="header-recipient-label">Recipient:</label>
-        <select id="recipient-select" class="header-select">
-          <!-- Dynamically populated from /api/recipients -->
-          <option value="">Loading profiles...</option>
-        </select>
-        <button id="btn-add-profile" class="btn-icon-sm" title="Add New Recipient Profile">+</button>
+      <!-- Multi Tenant Caregiver Account & Recipient Profile Selector -->
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        
+        <!-- Active Caregiver Selector -->
+        <div class="header-recipient-selector" title="Active Caregiver Account (Data is private and isolated)">
+          <span style="font-size:0.75rem; font-weight:700; color:var(--text-secondary);">Caregiver:</span>
+          <select id="caregiver-select" class="header-select">
+            <option value="caregiver_primary">Dr. Sarah Jenkins</option>
+            <option value="caregiver_clinic">Riverdale Therapy Center</option>
+            <option value="caregiver_home">Home Care Workspace</option>
+          </select>
+        </div>
+
+        <!-- Recipient Profile Selector -->
+        <div class="header-recipient-selector">
+          <label for="recipient-select" class="header-recipient-label">Recipient:</label>
+          <select id="recipient-select" class="header-select">
+            <option value="">Loading profiles...</option>
+          </select>
+          <button id="btn-add-profile" class="btn-icon-sm" title="Add New Recipient Profile">+</button>
+        </div>
+
       </div>
 
       <div class="header-actions">
@@ -47,8 +61,8 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Recipient Memory
         </button>
-        <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run 2-Turn Adaptive Demonstration">
-          ✨ 2-Turn Adaptive Demo
+        <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run Multi Turn Adaptive Demonstration">
+          ✨ Adaptive Memory Demo
         </button>
       </div>
     </header>
@@ -82,7 +96,7 @@
               <label for="style-select" class="form-label-inline">Style:</label>
               <select id="style-select" class="form-select-sm">
                 <option value="core_words">Core AAC Words</option>
-                <option value="step_by_step">Step-by-Step Sequence</option>
+                <option value="step_by_step">Sequential Steps</option>
               </select>
             </div>
             <button id="btn-generate" class="btn btn-primary btn-generate">
@@ -138,7 +152,7 @@
           <div class="empty-board-state">
             <div class="empty-icon">🧩</div>
             <h3>No Board Generated Yet</h3>
-            <p>CommuniCare translates caregiver messages into high-contrast picture symbols, structured by clinical Fitzgerald Key standards.</p>
+            <p>CommuniCare translates caregiver messages into high contrast picture symbols, structured by clinical Fitzgerald Key standards.</p>
             <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Morning Routine Preset</button>
           </div>
         </div>
@@ -162,8 +176,8 @@
         <div class="pipeline-card">
           <div class="pipeline-header" id="pipeline-toggle-header">
             <div class="pipeline-title-group">
-              <span class="pipeline-badge">Taskmaster Agent</span>
-              <h3 class="pipeline-title">Autonomous Pipeline Trace</h3>
+              <span class="pipeline-badge">Autonomous Pipeline</span>
+              <h3 class="pipeline-title">Agent Execution Trace</h3>
               <span id="pipeline-timer" class="pipeline-timer">Ready</span>
             </div>
             <button id="btn-toggle-trace" class="btn btn-ghost btn-sm">
@@ -191,7 +205,7 @@
               <div class="step-icon">3</div>
               <div class="step-info">
                 <div class="step-title">Symbol Resolution</div>
-                <div class="step-desc">ARASAAC & Vector Icons</div>
+                <div class="step-desc">ARASAAC and Vector Icons</div>
               </div>
             </div>
             <div class="pipeline-step step-idle">
@@ -218,14 +232,14 @@
     <div id="memory-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
-          <h2 class="modal-title">Recipient Memory & Profile (Firestore State)</h2>
+          <h2 class="modal-title">Recipient Memory and Profile (Firestore State)</h2>
           <button id="btn-close-modal" class="btn-close">&times;</button>
         </div>
         <div class="modal-body">
           <div id="memory-profile-summary" class="memory-summary-box"></div>
           <div class="memory-tabs">
             <div class="memory-section">
-              <h3>Learned Vocabulary & Success Reinforcements</h3>
+              <h3>Learned Vocabulary and Success Reinforcements</h3>
               <div id="learned-vocab-cloud" class="vocab-cloud"></div>
             </div>
             <div class="memory-section">
@@ -250,7 +264,7 @@
         <div class="modal-body">
           <form id="add-profile-form">
             <div class="form-group">
-              <label for="new-profile-name" class="form-label">Recipient Name / Nickname:</label>
+              <label for="new-profile-name" class="form-label">Recipient Name or Nickname:</label>
               <input type="text" id="new-profile-name" class="form-select" placeholder="e.g. Sam, Lucas, Grandma Helen" required />
             </div>
             <div class="form-row">
@@ -265,9 +279,9 @@
               <div class="form-group half-width">
                 <label for="new-profile-vocab" class="form-label">Vocabulary Level:</label>
                 <select id="new-profile-vocab" class="form-select">
-                  <option value="basic">Basic (3-5 core words)</option>
-                  <option value="intermediate">Intermediate (5-7 words)</option>
-                  <option value="advanced">Advanced (7-9 words)</option>
+                  <option value="basic">Basic (3 to 5 core words)</option>
+                  <option value="intermediate">Intermediate (5 to 7 words)</option>
+                  <option value="advanced">Advanced (7 to 9 words)</option>
                 </select>
               </div>
             </div>

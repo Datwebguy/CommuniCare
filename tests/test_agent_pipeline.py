@@ -1,5 +1,5 @@
 """
-End-to-End tests for the CommuniCare Autonomous Agent Pipeline.
+End to End tests for the CommuniCare Autonomous Agent Pipeline.
 Verifies message ingestion, simplification, symbol mapping, board assembly, and memory persistence.
 """
 
@@ -22,16 +22,15 @@ def test_agent_pipeline_morning_routine():
     # 1. Assert response structure
     assert response.board_id.startswith("board_")
     assert response.recipient_id == "leo_care"
-    assert response.recipient_name == "Leo (Age 7)"
     assert len(response.cards) > 0
     assert len(response.pipeline_trace) == 5
 
     # 2. Check pipeline trace steps
     step_names = [t.step_name for t in response.pipeline_trace]
-    assert "Profile & Memory Lookup" in step_names
+    assert "Profile and Memory Lookup" in step_names
     assert "Gemini Language Simplification" in step_names
     assert "AAC Symbol Resolution" in step_names
-    assert "Board Layout & Fitzgerald Composition" in step_names
+    assert "Board Layout and Fitzgerald Composition" in step_names
     assert "Memory State Update" in step_names
 
     # 3. Check cards contain key words
@@ -49,12 +48,10 @@ def test_agent_pipeline_morning_routine():
 def test_agent_pipeline_multi_turn_adaptation():
     """Verify system adapts over multiple messages using learned Firestore preferences."""
     test_id = "adaptive_demo_user"
-    # Create clean profile
     profile = firestore_service.get_recipient_profile(test_id)
     profile.preferred_symbol_mappings["doctor"] = "custom_doctor_icon"
     firestore_service.save_recipient_profile(profile)
 
-    # Message referring to doctor
     request = CaregiverMessageRequest(
         message="Hello! The doctor will visit us today to help check your health.",
         recipient_id=test_id

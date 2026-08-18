@@ -1,6 +1,6 @@
 """
 Data models and schemas for CommuniCare.
-Defines AAC symbols, recipient profiles, pipeline trace, and API contracts.
+Defines AAC symbols, multi tenant recipient profiles, pipeline trace, and API contracts.
 """
 
 from enum import Enum
@@ -12,13 +12,13 @@ from datetime import datetime
 class GrammarCategory(str, Enum):
     """
     Fitzgerald Key AAC Color Coding Standard:
-    - PEOPLE: Yellow (#FFD700 / #FEF08A)
-    - VERB: Green (#22C55E / #BBF7D0)
-    - NOUN: Orange (#F97316 / #FFEDD5)
-    - ADJECTIVE: Blue (#3B82F6 / #BFDBFE)
-    - SOCIAL_FEELINGS: Pink (#EC4899 / #FBCFE8)
-    - TIME_SCHEDULE: Purple (#8B5CF6 / #DDD6FE)
-    - MISC: Slate (#64748B / #E2E8F0)
+    PEOPLE: Yellow (#FFD700 / #FEF08A)
+    VERB: Green (#22C55E / #BBF7D0)
+    NOUN: Orange (#F97316 / #FFEDD5)
+    ADJECTIVE: Blue (#3B82F6 / #BFDBFE)
+    SOCIAL_FEELINGS: Pink (#EC4899 / #FBCFE8)
+    TIME_SCHEDULE: Purple (#8B5CF6 / #DDD6FE)
+    MISC: Slate (#64748B / #E2E8F0)
     """
     PEOPLE = "people"
     VERB = "verb"
@@ -53,9 +53,10 @@ class SymbolCard(BaseModel):
 
 class RecipientProfile(BaseModel):
     recipient_id: str
+    caregiver_id: str = "caregiver_primary"
     name: str
     age_group: str = "child"  # "child", "teen", "adult"
-    vocabulary_level: str = "basic"  # "basic" (1-4 words), "intermediate" (4-6 words), "advanced" (6-8 words)
+    vocabulary_level: str = "basic"  # "basic", "intermediate", "advanced"
     max_board_cards: int = 6
     high_contrast_mode: bool = True
     color_coding_enabled: bool = True
@@ -80,15 +81,17 @@ class PipelineStepTrace(BaseModel):
 
 
 class CaregiverMessageRequest(BaseModel):
-    message: str = Field(..., description="Raw natural language caregiver message or care note")
+    message: str = Field(..., description="Natural language caregiver message or care note")
     recipient_id: str = Field(default="alex_care", description="Identifier of the care recipient")
-    simplify_style: Optional[str] = Field(default="core_words", description="Simplification style: core_words, step_by_step, or routine")
+    caregiver_id: str = Field(default="caregiver_primary", description="Authenticated caregiver user identifier")
+    simplify_style: Optional[str] = Field(default="core_words", description="Simplification style: core_words or sequential_steps")
     custom_notes: Optional[str] = None
 
 
 class AACBoardResponse(BaseModel):
     board_id: str
     recipient_id: str
+    caregiver_id: str = "caregiver_primary"
     recipient_name: str
     original_message: str
     simplified_message: str
@@ -102,6 +105,7 @@ class AACBoardResponse(BaseModel):
 class FeedbackRequest(BaseModel):
     board_id: str
     recipient_id: str
+    caregiver_id: str = "caregiver_primary"
     card_id: Optional[str] = None
     word: Optional[str] = None
     action: str = Field(..., description="'worked_well', 'replace_symbol', 'add_preference', 'mark_difficult'")

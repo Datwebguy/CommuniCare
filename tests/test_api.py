@@ -1,6 +1,6 @@
 """
 API Integration tests for FastAPI endpoints.
-Verifies REST contracts, HTTP status codes, error handling, and healthchecks.
+Verifies REST contracts, HTTP status codes, error handling, multi tenant isolation, and health checks.
 """
 
 import pytest
@@ -17,7 +17,7 @@ def test_health_check_endpoint():
     data = response.json()
     assert data["status"] == "healthy"
     assert "CommuniCare" in data["service"]
-    assert "Taskmaster" in data["track"]
+    assert data["system_status"] == "Operational"
 
 
 def test_generate_board_endpoint_success():
@@ -25,6 +25,7 @@ def test_generate_board_endpoint_success():
     payload = {
         "message": "Good morning Leo, please take your medicine and drink water.",
         "recipient_id": "leo_care",
+        "caregiver_id": "caregiver_primary",
         "simplify_style": "core_words"
     }
     response = client.post("/api/generate-board", json=payload)
@@ -46,12 +47,12 @@ def test_generate_board_empty_message_validation():
 
 
 def test_recipients_endpoints():
-    """Verify GET /api/recipients and GET /api/recipients/{id}."""
-    res_list = client.get("/api/recipients")
+    """Verify GET /api/recipients and GET /api/recipients/{id} with multi tenant headers."""
+    res_list = client.get("/api/recipients", headers={"X-Caregiver-ID": "caregiver_primary"})
     assert res_list.status_code == 200
     assert isinstance(res_list.json(), list)
 
-    res_single = client.get("/api/recipients/leo_care")
+    res_single = client.get("/api/recipients/leo_care", headers={"X-Caregiver-ID": "caregiver_primary"})
     assert res_single.status_code == 200
     assert res_single.json()["recipient_id"] == "leo_care"
 
@@ -61,6 +62,7 @@ def test_feedback_endpoint():
     payload = {
         "board_id": "test_board_123",
         "recipient_id": "leo_care",
+        "caregiver_id": "caregiver_primary",
         "word": "pancakes",
         "action": "worked_well"
     }
@@ -72,7 +74,7 @@ def test_feedback_endpoint():
 
 def test_presets_endpoint():
     """Verify GET /api/presets returns pre-configured scenario presets."""
-    response = client.get("/api/presets")
+    response = client.get("/api/presets", headers={"X-Caregiver-ID": "caregiver_primary"})
     assert response.status_code == 200
     presets = response.json()
     assert len(presets) >= 3

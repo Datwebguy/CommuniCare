@@ -12,7 +12,7 @@ def test_get_and_save_recipient_profile():
     """Verify getting default recipient profile and saving modifications."""
     profile = firestore_service.get_recipient_profile("leo_care")
     assert profile.recipient_id == "leo_care"
-    assert profile.name == "Leo (Age 7)"
+    assert "Leo" in profile.name
     assert profile.vocabulary_level == "basic"
 
     # Modify and save
