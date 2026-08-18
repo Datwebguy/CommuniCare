@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const presetsContainer = document.getElementById('presets-container');
   const pipelineStepsContainer = document.getElementById('pipeline-steps');
   const pipelineTimer = document.getElementById('pipeline-timer');
+  const pipelineToggleHeader = document.getElementById('pipeline-toggle-header');
+  const btnToggleTrace = document.getElementById('btn-toggle-trace');
+  const traceToggleText = document.getElementById('trace-toggle-text');
   const aacCardsGrid = document.getElementById('aac-cards-grid');
   const simplifiedText = document.getElementById('simplified-text');
   const boardTitle = document.getElementById('board-title');
@@ -31,34 +34,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const presentationBanner = document.getElementById('presentation-banner');
   const btnExitPresentation = document.getElementById('btn-exit-presentation');
   const presentationRecipient = document.getElementById('presentation-recipient');
-  const statusText = document.getElementById('status-text');
 
   // Application State
   let currentBoard = null;
   let currentPresets = [];
   let isGenerating = false;
+  let isTraceExpanded = true;
 
   // Initialize
   initApp();
 
   async function initApp() {
-    await checkSystemHealth();
     await loadPresets();
     setupEventListeners();
-  }
-
-  async function checkSystemHealth() {
-    try {
-      const res = await fetch('/api/health');
-      if (res.ok) {
-        const data = await res.json();
-        statusText.textContent = data.firestore_mode.includes('Cloud') 
-          ? 'Cloud Run & Firestore Live' 
-          : 'Local Agent Engine Ready';
-      }
-    } catch (e) {
-      statusText.textContent = 'Agent Ready (Offline Mode)';
-    }
   }
 
   async function loadPresets() {
@@ -84,20 +72,19 @@ document.addEventListener('DOMContentLoaded', () => {
     presetsContainer.innerHTML = '';
     currentPresets.forEach((p) => {
       const icon = PRESET_ICONS[p.id] || "📋";
-      const pill = document.createElement('div');
-      pill.className = 'preset-pill';
-      pill.innerHTML = `
-        <span class="preset-title">${icon} ${p.title}</span>
-        <span class="preset-desc">${p.description}</span>
-      `;
-      pill.addEventListener('click', () => {
+      const chip = document.createElement('button');
+      chip.className = 'preset-chip';
+      chip.type = 'button';
+      chip.innerHTML = `${icon} ${p.title}`;
+      chip.title = p.description;
+      chip.addEventListener('click', () => {
         caregiverMessageInput.value = p.message;
         if (p.recipient_id) {
           recipientSelect.value = p.recipient_id;
         }
         caregiverMessageInput.focus();
       });
-      presetsContainer.appendChild(pill);
+      presetsContainer.appendChild(chip);
     });
   }
 
@@ -119,6 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
     btnFullscreen.addEventListener('click', () => togglePresentationMode(true));
     btnExitPresentation.addEventListener('click', () => togglePresentationMode(false));
     
+    // Trace Collapse Toggle
+    pipelineToggleHeader.addEventListener('click', () => {
+      isTraceExpanded = !isTraceExpanded;
+      if (isTraceExpanded) {
+        pipelineStepsContainer.classList.remove('hidden');
+        traceToggleText.textContent = 'Hide Details';
+      } else {
+        pipelineStepsContainer.classList.add('hidden');
+        traceToggleText.textContent = 'View Details';
+      }
+    });
+
     // Memory Modal
     btnMemoryView.addEventListener('click', () => openMemoryModal());
     btnCloseModal.addEventListener('click', () => closeMemoryModal());
@@ -152,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isGenerating) return;
     isGenerating = true;
     btnGenerate.disabled = true;
-    btnGenerate.innerHTML = '<span>⚡ Processing Pipeline...</span>';
+    btnGenerate.innerHTML = '<span>⚡ Processing...</span>';
 
     renderPipelineRunning();
     const startTime = performance.now();
@@ -195,11 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderPipelineRunning() {
     pipelineTimer.textContent = 'Executing...';
     const steps = [
-      { num: 1, title: 'Firestore Recipient Memory', desc: 'Fetching vocabulary profile & preferences...' },
-      { num: 2, title: 'Gemini Language Simplification', desc: 'Reasoning about core AAC concepts...' },
-      { num: 3, title: 'ARASAAC Symbol Resolution', desc: 'Matching symbols with graceful text fallback...' },
-      { num: 4, title: 'High-Contrast Board Assembly', desc: 'Applying Fitzgerald Key color standards...' },
-      { num: 5, title: 'Firestore State Persistence', desc: 'Recording interaction to memory...' },
+      { num: 1, title: 'Memory Lookup', desc: 'Fetching profile...' },
+      { num: 2, title: 'Simplification', desc: 'Reasoning concepts...' },
+      { num: 3, title: 'Symbol Resolution', desc: 'Matching pictograms...' },
+      { num: 4, title: 'Board Assembly', desc: 'Fitzgerald Key layout...' },
+      { num: 5, title: 'State Persistence', desc: 'Saving memory...' },
     ];
 
     pipelineStepsContainer.innerHTML = steps.map(s => `
@@ -227,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="step-info">
             <div class="step-title">
               ${step.step_name} 
-              <span style="font-size:0.7rem; color:var(--brand-primary); font-weight:700; margin-left:6px;">(${step.duration_ms}ms)</span>
+              <span style="font-size:0.68rem; color:var(--brand-primary); font-weight:800; margin-left:4px;">(${step.duration_ms}ms)</span>
             </div>
             <div class="step-desc">${step.output_summary || step.description}</div>
           </div>
@@ -241,7 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
     boardIntentBadge.textContent = board.core_intent;
     simplifiedText.textContent = board.simplified_message;
 
-    // Show personalization indicator if adaptations occurred
     if (board.personalized_adaptations_applied && board.personalized_adaptations_applied.length > 0) {
       adaptationAlert.textContent = `✨ ${board.personalized_adaptations_applied.join(' | ')}`;
       adaptationAlert.classList.remove('hidden');

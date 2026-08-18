@@ -11,10 +11,9 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <!-- Global Application Shell -->
   <div id="app" class="app-container">
     
-    <!-- Navigation Header -->
+    <!-- Top Navigation Header -->
     <header class="app-header">
       <div class="header-brand">
         <div class="brand-icon">
@@ -31,12 +30,13 @@
         </div>
       </div>
 
-      <div class="header-center-badges">
-        <span class="track-badge">Taskmaster Track &bull; Google Hackathon</span>
-        <div id="backend-status" class="status-pill" title="System Ready">
-          <span class="status-dot"></span>
-          <span id="status-text">Cloud Engine Active</span>
-        </div>
+      <!-- Recipient Profile Selector Chip -->
+      <div class="header-recipient-selector">
+        <label for="recipient-select" class="header-recipient-label">Care Recipient:</label>
+        <select id="recipient-select" class="header-select">
+          <option value="leo_care">👦 Leo (Age 7 &bull; Child &bull; Basic AAC)</option>
+          <option value="maya_adult">👩 Maya (Adult &bull; Stroke Recovery &bull; Intermediate)</option>
+        </select>
       </div>
 
       <div class="header-actions">
@@ -44,172 +44,106 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Recipient Memory
         </button>
-        <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run 2-Turn Adaptation Test">
+        <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run 2-Turn Adaptive Demonstration">
           ✨ 2-Turn Adaptive Demo
         </button>
       </div>
     </header>
 
-    <!-- Main Content Area -->
-    <main class="main-layout">
+    <!-- Main Container -->
+    <main class="main-content">
 
-      <!-- Left Column: Caregiver Studio -->
-      <section class="caregiver-panel">
-        <div class="panel-card">
-          <div class="panel-header">
-            <h2 class="panel-title">Caregiver Studio</h2>
-            <span class="panel-subtitle">Enter natural messages or pick a care routine</span>
+      <!-- Section 1: Caregiver Input Studio (Top Unified Card) -->
+      <section class="studio-card">
+        <!-- Quick Scenario Chips -->
+        <div class="presets-row">
+          <span class="presets-label">Scenario Presets:</span>
+          <div id="presets-container" class="presets-chips">
+            <!-- Dynamically populated chips -->
+          </div>
+        </div>
+
+        <!-- Input Area & Generate Controls -->
+        <div class="input-composer-row">
+          <div class="textarea-wrapper">
+            <textarea
+              id="caregiver-message"
+              class="form-textarea"
+              rows="2"
+              placeholder="Enter caregiver message or speech note (e.g., 'Good morning Leo! Please take your medicine with water, then eat pancakes for breakfast and we will take a walk to the park to see the dogs.')"
+            ></textarea>
           </div>
 
-          <!-- Recipient Profile Selector -->
-          <div class="form-group">
-            <label for="recipient-select" class="form-label">
-              Care Recipient Profile:
-            </label>
-            <div class="select-wrapper">
-              <select id="recipient-select" class="form-select">
-                <option value="leo_care">👦 Leo (Age 7 &bull; Child &bull; Basic AAC)</option>
-                <option value="maya_adult">👩 Maya (Adult &bull; Stroke Recovery &bull; Intermediate)</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Preset Scenario Pills -->
-          <div class="presets-section">
-            <label class="form-label">Quick Scenario Presets:</label>
-            <div id="presets-container" class="presets-grid">
-              <!-- Dynamically populated -->
-            </div>
-          </div>
-
-          <!-- Raw Message Input -->
-          <div class="form-group">
-            <label for="caregiver-message" class="form-label">Message to Communicate:</label>
-            <div class="textarea-wrapper">
-              <textarea
-                id="caregiver-message"
-                class="form-textarea"
-                rows="4"
-                placeholder="e.g., 'Good morning Leo! Please take your medicine with a glass of water, then eat pancakes for breakfast.'"
-              ></textarea>
-            </div>
-          </div>
-
-          <!-- Generation Options & Action -->
-          <div class="form-row">
-            <div class="form-group half-width">
-              <label for="style-select" class="form-label">Simplification Style:</label>
-              <select id="style-select" class="form-select">
-                <option value="core_words">Core Words (High Impact)</option>
+          <div class="composer-actions">
+            <div class="style-selector-group">
+              <label for="style-select" class="form-label-inline">Style:</label>
+              <select id="style-select" class="form-select-sm">
+                <option value="core_words">Core AAC Words</option>
                 <option value="step_by_step">Step-by-Step Sequence</option>
               </select>
             </div>
-            <div class="form-group half-width align-end">
-              <button id="btn-generate" class="btn btn-primary btn-block">
-                <span>⚡ Generate AAC Board</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Autonomous Pipeline Trace Box -->
-          <div id="pipeline-trace-box" class="pipeline-card">
-            <div class="pipeline-header">
-              <h3 class="pipeline-title">Autonomous Agent Trace</h3>
-              <span id="pipeline-timer" class="pipeline-timer">Ready</span>
-            </div>
-            <div id="pipeline-steps" class="pipeline-steps-list">
-              <div class="pipeline-step step-idle">
-                <div class="step-icon">1</div>
-                <div class="step-info">
-                  <div class="step-title">Firestore Recipient Memory</div>
-                  <div class="step-desc">Awaiting caregiver message...</div>
-                </div>
-              </div>
-              <div class="pipeline-step step-idle">
-                <div class="step-icon">2</div>
-                <div class="step-info">
-                  <div class="step-title">Gemini Language Simplification</div>
-                  <div class="step-desc">Extract plain language & concepts</div>
-                </div>
-              </div>
-              <div class="pipeline-step step-idle">
-                <div class="step-icon">3</div>
-                <div class="step-info">
-                  <div class="step-title">ARASAAC Symbol Resolution</div>
-                  <div class="step-desc">Disambiguate pictograms with text fallback</div>
-                </div>
-              </div>
-              <div class="pipeline-step step-idle">
-                <div class="step-icon">4</div>
-                <div class="step-info">
-                  <div class="step-title">High-Contrast Board Assembly</div>
-                  <div class="step-desc">Fitzgerald Key clinical color mapping</div>
-                </div>
-              </div>
-              <div class="pipeline-step step-idle">
-                <div class="step-icon">5</div>
-                <div class="step-info">
-                  <div class="step-title">Firestore State Persistence</div>
-                  <div class="step-desc">Store vocabulary & feedback memory</div>
-                </div>
-              </div>
-            </div>
+            <button id="btn-generate" class="btn btn-primary btn-generate">
+              <span>⚡ Generate AAC Board</span>
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- Right Column: Interactive Generated AAC Board -->
-      <section class="board-panel">
-        <div class="panel-card board-card-container">
-          
-          <!-- Board Header / Toolbar -->
-          <div class="board-topbar">
-            <div class="board-meta">
+      <!-- Section 2: Main AAC Communication Board (Hero Canvas) -->
+      <section class="board-card">
+        
+        <!-- Board Top Header -->
+        <div class="board-topbar">
+          <div class="board-meta">
+            <div class="board-title-row">
               <h2 id="board-title" class="board-main-title">Communication Board</h2>
-              <div id="board-intent-badge" class="intent-badge">Awaiting Generation</div>
-            </div>
-
-            <div class="board-toolbar-actions">
-              <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                Speak All
-              </button>
-              <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical AAC communication sheet">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print Sheet
-              </button>
-              <button id="btn-fullscreen" class="btn btn-secondary btn-sm" title="Fullscreen Presentation View for Recipient">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                Presentation View
-              </button>
+              <span id="board-intent-badge" class="intent-badge">Awaiting Input</span>
             </div>
           </div>
 
-          <!-- Simplified Plain Language Banner -->
-          <div id="simplified-banner" class="simplified-sentence-box">
+          <div class="board-toolbar-actions">
+            <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              Speak All
+            </button>
+            <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical AAC communication sheet">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Print Sheet
+            </button>
+            <button id="btn-fullscreen" class="btn btn-secondary btn-sm" title="Fullscreen Presentation View for Recipient">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              Presentation View
+            </button>
+          </div>
+        </div>
+
+        <!-- Plain Language Story Ribbon -->
+        <div id="simplified-banner" class="simplified-sentence-box">
+          <div class="simplified-ribbon-content">
             <span class="simplified-label">Simplified Plain Language:</span>
             <p id="simplified-text" class="simplified-sentence">
-              Select a preset scenario on the left or type your own message to autonomously generate an accessible picture symbol board.
+              Select a scenario preset above or type your message to autonomously generate an accessible picture symbol board.
             </p>
-            <div id="adaptation-alert" class="adaptation-tag hidden">
-              ✨ Personalized preference applied from memory
-            </div>
           </div>
-
-          <!-- AAC Symbol Cards Grid (Balanced 3x2 Grid) -->
-          <div id="aac-cards-grid" class="aac-grid">
-            <!-- Empty state illustration -->
-            <div class="empty-board-state">
-              <div class="empty-icon">🧩</div>
-              <h3>No Board Generated Yet</h3>
-              <p>CommuniCare translates natural caregiver messages into high-contrast picture symbols, structured by clinical Fitzgerald Key standards.</p>
-              <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Morning Routine Sample</button>
-            </div>
+          <div id="adaptation-alert" class="adaptation-tag hidden">
+            ✨ Personalized preference applied from memory
           </div>
+        </div>
 
-          <!-- Fitzgerald Key Legend Bar -->
-          <div class="fitzgerald-legend">
-            <span class="legend-title">Fitzgerald Key Standard:</span>
+        <!-- AAC Cards Grid -->
+        <div id="aac-cards-grid" class="aac-grid">
+          <div class="empty-board-state">
+            <div class="empty-icon">🧩</div>
+            <h3>No Board Generated Yet</h3>
+            <p>CommuniCare translates caregiver messages into high-contrast picture symbols, structured by clinical Fitzgerald Key standards.</p>
+            <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Morning Routine Preset</button>
+          </div>
+        </div>
+
+        <!-- Fitzgerald Key Legend Bar -->
+        <div class="fitzgerald-legend">
+          <span class="legend-title">Fitzgerald Key Standard:</span>
+          <div class="legend-pills-row">
             <span class="legend-pill" style="background:#FEFCE8; border-color:#EAB308; color:#854D0E;">Yellow: People</span>
             <span class="legend-pill" style="background:#ECFDF5; border-color:#10B981; color:#065F46;">Green: Verbs</span>
             <span class="legend-pill" style="background:#FFF7ED; border-color:#F97316; color:#9A3412;">Orange: Nouns</span>
@@ -219,13 +153,69 @@
           </div>
         </div>
       </section>
+
+      <!-- Section 3: Autonomous Agent Pipeline Trace (Collapsible Insights Card) -->
+      <section class="pipeline-section">
+        <div class="pipeline-card">
+          <div class="pipeline-header" id="pipeline-toggle-header">
+            <div class="pipeline-title-group">
+              <span class="pipeline-badge">Taskmaster Agent</span>
+              <h3 class="pipeline-title">Autonomous Pipeline Trace</h3>
+              <span id="pipeline-timer" class="pipeline-timer">Ready</span>
+            </div>
+            <button id="btn-toggle-trace" class="btn btn-ghost btn-sm">
+              <span id="trace-toggle-text">View Details</span>
+              <svg id="trace-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+
+          <div id="pipeline-steps" class="pipeline-steps-horizontal">
+            <div class="pipeline-step step-idle">
+              <div class="step-icon">1</div>
+              <div class="step-info">
+                <div class="step-title">Memory Lookup</div>
+                <div class="step-desc">Firestore Profile Context</div>
+              </div>
+            </div>
+            <div class="pipeline-step step-idle">
+              <div class="step-icon">2</div>
+              <div class="step-info">
+                <div class="step-title">Gemini Simplification</div>
+                <div class="step-desc">Extract Plain Concepts</div>
+              </div>
+            </div>
+            <div class="pipeline-step step-idle">
+              <div class="step-icon">3</div>
+              <div class="step-info">
+                <div class="step-title">Symbol Resolution</div>
+                <div class="step-desc">ARASAAC & Vector Icons</div>
+              </div>
+            </div>
+            <div class="pipeline-step step-idle">
+              <div class="step-icon">4</div>
+              <div class="step-info">
+                <div class="step-title">Board Assembly</div>
+                <div class="step-desc">Fitzgerald Key Layout</div>
+              </div>
+            </div>
+            <div class="pipeline-step step-idle">
+              <div class="step-icon">5</div>
+              <div class="step-info">
+                <div class="step-title">State Persistence</div>
+                <div class="step-desc">Update Memory in Firestore</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <!-- Modal: Recipient Memory & Firestore Inspector -->
     <div id="memory-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
-          <h2 class="modal-title">Recipient Memory (Firestore State)</h2>
+          <h2 class="modal-title">Recipient Memory & Profile (Firestore State)</h2>
           <button id="btn-close-modal" class="btn-close">&times;</button>
         </div>
         <div class="modal-body">
@@ -251,7 +241,7 @@
 
     <!-- Presentation Fullscreen Banner -->
     <div id="presentation-banner" class="presentation-header hidden">
-      <span id="presentation-recipient">Showing to: Leo</span>
+      <span id="presentation-recipient">Showing Board to: Leo</span>
       <button id="btn-exit-presentation" class="btn btn-secondary btn-sm">Exit Presentation (Esc)</button>
     </div>
 

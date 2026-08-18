@@ -1,6 +1,6 @@
 /* ==========================================================================
-   CommuniCare: Premium Accessible Design System
-   Modern Clinical / Assistive Aesthetic (Light, High-Contrast, Calm & Crisp)
+   CommuniCare: Cohesive Assistive Healthcare & AAC Design System
+   Modern Clinical / Accessible Aesthetic (Light, Clean, Zero-Overflow)
    ========================================================================== */
 
 :root {
@@ -30,35 +30,6 @@
   --brand-amber: #D97706;
   --brand-amber-light: #FEF3C7;
 
-  /* Fitzgerald Key Clinical AAC Standard */
-  --fitz-people-border: #EAB308;
-  --fitz-people-bg: #FEFCE8;
-  --fitz-people-text: #854D0E;
-
-  --fitz-verb-border: #10B981;
-  --fitz-verb-bg: #ECFDF5;
-  --fitz-verb-text: #065F46;
-
-  --fitz-noun-border: #F97316;
-  --fitz-noun-bg: #FFF7ED;
-  --fitz-noun-text: #9A3412;
-
-  --fitz-adj-border: #3B82F6;
-  --fitz-adj-bg: #EFF6FF;
-  --fitz-adj-text: #1E40AF;
-
-  --fitz-feeling-border: #EC4899;
-  --fitz-feeling-bg: #FDF2F8;
-  --fitz-feeling-text: #9D174D;
-
-  --fitz-time-border: #8B5CF6;
-  --fitz-time-bg: #F5F3FF;
-  --fitz-time-text: #5B21B6;
-
-  --fitz-misc-border: #64748B;
-  --fitz-misc-bg: #F8FAFC;
-  --fitz-misc-text: #334155;
-
   /* Layout & Elevations */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -66,9 +37,9 @@
   --radius-xl: 24px;
   
   --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.05);
-  --shadow-card: 0 4px 12px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
   --shadow-hover: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
-  --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.2);
+  --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
 
   --font-sans: 'Lexend', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 }
@@ -101,7 +72,7 @@ body {
 .app-header {
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-light);
-  padding: 0.85rem 2rem;
+  padding: 0.75rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -119,8 +90,8 @@ body {
 }
 
 .brand-icon {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
   border-radius: var(--radius-md);
   display: flex;
@@ -143,48 +114,32 @@ body {
   font-weight: 500;
 }
 
-.header-center-badges {
+/* Header Recipient Selector */
+.header-recipient-selector {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.6rem;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  padding: 0.3rem 0.85rem;
+  border-radius: var(--radius-md);
 }
 
-.track-badge {
-  background-color: #EFF6FF;
-  color: #1D4ED8;
-  border: 1px solid #BFDBFE;
-  padding: 0.3rem 0.85rem;
-  border-radius: 9999px;
+.header-recipient-label {
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  color: var(--text-secondary);
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  background-color: #ECFDF5;
-  color: #065F46;
-  border: 1px solid #A7F3D0;
-  padding: 0.3rem 0.85rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
+.header-select {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
   font-weight: 700;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  background-color: #10B981;
-  border-radius: 50%;
-  box-shadow: 0 0 6px #10B981;
-  animation: pulse-dot 2s infinite ease-in-out;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
 }
 
 .header-actions {
@@ -200,11 +155,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.15rem;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
   border-radius: var(--radius-md);
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s ease-in-out;
@@ -213,8 +168,8 @@ body {
 }
 
 .btn-sm {
-  padding: 0.4rem 0.8rem;
-  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
 }
 
 .btn-primary {
@@ -242,275 +197,184 @@ body {
 }
 
 .btn-accent {
-  background-color: #F59E0B;
-  color: #78350F;
+  background-color: #FEF3C7;
+  color: #92400E;
   border: 1px solid #FCD34D;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .btn-accent:hover {
-  background-color: #FBBF24;
+  background-color: #FDE68A;
   transform: translateY(-1px);
 }
 
-.btn-block {
-  width: 100%;
+.btn-ghost {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.2rem 0.5rem;
+}
+
+.btn-ghost:hover {
+  color: var(--text-primary);
 }
 
 /* ==========================================================================
-   Main Layout & Panels
+   Main Content Layout (Clean Vertical Flow)
    ========================================================================== */
-.main-layout {
-  display: grid;
-  grid-template-columns: 410px 1fr;
-  gap: 1.75rem;
-  padding: 1.75rem 2rem;
-  flex: 1;
-  max-width: 1700px;
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem 2rem 2.5rem;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  flex: 1;
 }
 
-@media (max-width: 1100px) {
-  .main-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.panel-card {
+/* ==========================================================================
+   Section 1: Caregiver Input Studio (Top Unified Card)
+   ========================================================================== */
+.studio-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1.15rem 1.4rem;
   box-shadow: var(--shadow-card);
 }
 
-.panel-header {
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid var(--border-light);
+.presets-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
 }
 
-.panel-title {
-  font-size: 1.15rem;
+.presets-label {
+  font-size: 0.75rem;
   font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-}
-
-.panel-subtitle {
-  font-size: 0.8rem;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
 }
 
-/* Form Controls */
-.form-group {
-  margin-bottom: 1.15rem;
+.presets-chips {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.form-label {
-  display: block;
-  font-size: 0.82rem;
+.preset-chip {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0.45rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.form-select, .form-textarea {
+.preset-chip:hover {
+  background-color: var(--brand-primary-light);
+  border-color: #93C5FD;
+  color: var(--brand-primary);
+  transform: translateY(-1px);
+}
+
+.input-composer-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (max-width: 860px) {
+  .input-composer-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.textarea-wrapper {
+  flex: 1;
+}
+
+.form-textarea {
   width: 100%;
   font-family: inherit;
-  font-size: 0.9rem;
-  padding: 0.7rem 0.9rem;
+  font-size: 0.92rem;
+  padding: 0.65rem 0.9rem;
   border-radius: var(--radius-md);
   background-color: var(--bg-surface);
   color: var(--text-primary);
   border: 1.5px solid var(--border-light);
   transition: border-color 0.15s, box-shadow 0.15s;
+  resize: none;
+  line-height: 1.4;
 }
 
-.form-select:focus, .form-textarea:focus {
+.form-textarea:focus {
   outline: none;
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-.form-textarea {
-  resize: vertical;
-  min-height: 95px;
-  line-height: 1.45;
-}
-
-.form-row {
-  display: flex;
-  gap: 0.85rem;
-  align-items: flex-end;
-}
-
-.half-width {
-  flex: 1;
-}
-
-.align-end {
-  display: flex;
-  align-items: flex-end;
-}
-
-/* Presets Grid */
-.presets-section {
-  margin-bottom: 1.15rem;
-}
-
-.presets-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
-
-.preset-pill {
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 0.6rem 0.75rem;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.preset-pill:hover {
-  background-color: var(--brand-primary-light);
-  border-color: #93C5FD;
-  transform: translateY(-1px);
-}
-
-.preset-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  display: block;
-}
-
-.preset-desc {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 2px;
-}
-
-/* ==========================================================================
-   Autonomous Agent Pipeline Visualizer
-   ========================================================================== */
-.pipeline-card {
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 1.1rem;
-  margin-top: 1.25rem;
-}
-
-.pipeline-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.85rem;
-}
-
-.pipeline-title {
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.pipeline-timer {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--brand-primary);
-  background-color: var(--brand-primary-light);
-  padding: 0.15rem 0.5rem;
-  border-radius: 9999px;
-}
-
-.pipeline-steps-list {
+.composer-actions {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  align-items: stretch;
+  min-width: 210px;
 }
 
-.pipeline-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-light);
-  transition: all 0.2s ease;
-}
-
-.pipeline-step.step-running {
-  background-color: var(--brand-primary-light);
-  border-color: #93C5FD;
-}
-
-.pipeline-step.step-completed {
-  background-color: #F0FDF4;
-  border-color: #86EFAC;
-}
-
-.pipeline-step.step-fallback {
-  background-color: #FEF3C7;
-  border-color: #FDE68A;
-}
-
-.step-icon {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background-color: var(--bg-muted);
-  color: var(--text-secondary);
-  font-size: 0.72rem;
-  font-weight: 800;
+.style-selector-group {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-top: 1px;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.step-completed .step-icon {
-  background-color: #10B981;
-  color: #FFFFFF;
-}
-
-.step-running .step-icon {
-  background-color: var(--brand-primary);
-  color: #FFFFFF;
-  animation: pulse-dot 1s infinite;
-}
-
-.step-title {
-  font-size: 0.8rem;
+.form-label-inline {
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-secondary);
 }
 
-.step-desc {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  line-height: 1.35;
+.form-select-sm {
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.btn-generate {
+  padding: 0.65rem 1.25rem;
+  font-size: 0.9rem;
 }
 
 /* ==========================================================================
-   Board Panel & High-Contrast AAC Grid
+   Section 2: Main AAC Board (Hero Canvas)
    ========================================================================== */
-.board-card-container {
+.board-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
-  min-height: 600px;
+  min-height: 480px;
 }
 
 .board-topbar {
@@ -518,14 +382,20 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.1rem;
-  padding-bottom: 0.9rem;
+  padding-bottom: 0.85rem;
   border-bottom: 1px solid var(--border-light);
   gap: 1rem;
   flex-wrap: wrap;
 }
 
+.board-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .board-main-title {
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.01em;
@@ -540,7 +410,6 @@ body {
   font-weight: 700;
   padding: 0.2rem 0.65rem;
   border-radius: 9999px;
-  margin-top: 0.2rem;
 }
 
 .board-toolbar-actions {
@@ -551,25 +420,24 @@ body {
 /* Plain Language Banner */
 .simplified-sentence-box {
   background: linear-gradient(135deg, #EFF6FF 0%, #F8FAFC 100%);
-  border: 2px solid #BFDBFE;
+  border: 1.5px solid #BFDBFE;
   border-radius: var(--radius-md);
-  padding: 1.1rem 1.4rem;
-  margin-bottom: 1.4rem;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.04);
+  padding: 1rem 1.35rem;
+  margin-bottom: 1.25rem;
 }
 
 .simplified-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--brand-primary);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.25rem;
 }
 
 .simplified-sentence {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.4;
@@ -584,17 +452,29 @@ body {
   font-weight: 700;
   padding: 0.2rem 0.6rem;
   border-radius: 6px;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
 }
 
-/* AAC Cards Grid Layout (Structured & Balanced) */
+/* AAC Cards Grid (Perfect 3-column / 2-row layout) */
 .aac-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.25rem;
   flex: 1;
   align-content: start;
   padding: 0.25rem 0 1rem;
+}
+
+@media (max-width: 900px) {
+  .aac-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 580px) {
+  .aac-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Individual AAC Symbol Card */
@@ -612,7 +492,7 @@ body {
   position: relative;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   user-select: none;
-  min-height: 230px;
+  min-height: 220px;
 }
 
 .aac-card:hover {
@@ -647,14 +527,14 @@ body {
 }
 
 .card-visual-wrapper {
-  width: 105px;
-  height: 105px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   background-color: var(--tag-bg, #F8FAFC);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1rem 0 0.5rem;
+  margin: 0.85rem 0 0.45rem;
   padding: 10px;
   transition: transform 0.15s ease;
 }
@@ -676,18 +556,18 @@ body {
 }
 
 .card-label {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   text-align: center;
-  margin-top: 0.35rem;
+  margin-top: 0.3rem;
   line-height: 1.15;
 }
 
 .card-subtext {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   font-weight: 600;
   margin-top: 2px;
@@ -698,10 +578,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  margin-top: 0.75rem;
+  margin-top: 0.65rem;
   width: 100%;
   border-top: 1px solid var(--border-light);
-  padding-top: 0.5rem;
+  padding-top: 0.45rem;
 }
 
 .btn-card-action {
@@ -711,7 +591,7 @@ body {
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 0.25rem 0.65rem;
+  padding: 0.2rem 0.65rem;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -726,7 +606,7 @@ body {
 .empty-board-state {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3.5rem 2rem;
   color: var(--text-secondary);
   display: flex;
   flex-direction: column;
@@ -735,50 +615,190 @@ body {
 }
 
 .empty-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 2.8rem;
+  margin-bottom: 0.85rem;
 }
 
 .empty-board-state h3 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   color: var(--text-primary);
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .empty-board-state p {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   max-width: 480px;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 /* Fitzgerald Key Legend Bar */
 .fitzgerald-legend {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 0.75rem;
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-light);
-  padding: 0.75rem 1.1rem;
+  padding: 0.65rem 1rem;
   border-radius: var(--radius-md);
-  margin-top: 1.4rem;
+  margin-top: 1.15rem;
+  flex-wrap: wrap;
 }
 
 .legend-title {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: var(--text-secondary);
   text-transform: uppercase;
-  margin-right: 0.4rem;
+}
+
+.legend-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
 .legend-pill {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.2rem 0.6rem;
+  padding: 0.15rem 0.55rem;
   border-radius: 9999px;
   border: 1px solid;
+}
+
+/* ==========================================================================
+   Section 3: Pipeline Trace (Collapsible Bottom Bar)
+   ========================================================================== */
+.pipeline-section {
+  width: 100%;
+}
+
+.pipeline-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.4rem;
+  box-shadow: var(--shadow-card);
+}
+
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pipeline-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pipeline-badge {
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+}
+
+.pipeline-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.pipeline-timer {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  background-color: var(--brand-primary-light);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.pipeline-steps-horizontal {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-light);
+}
+
+@media (max-width: 900px) {
+  .pipeline-steps-horizontal {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pipeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+.pipeline-step.step-running {
+  background-color: var(--brand-primary-light);
+  border-color: #93C5FD;
+}
+
+.pipeline-step.step-completed {
+  background-color: #F0FDF4;
+  border-color: #86EFAC;
+}
+
+.pipeline-step.step-fallback {
+  background-color: #FEF3C7;
+  border-color: #FDE68A;
+}
+
+.step-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--bg-muted);
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-completed .step-icon {
+  background-color: #10B981;
+  color: #FFFFFF;
+}
+
+.step-running .step-icon {
+  background-color: var(--brand-primary);
+  color: #FFFFFF;
+  animation: pulse-dot 1s infinite;
+}
+
+.step-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.step-desc {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
 }
 
 /* ==========================================================================
@@ -801,7 +821,7 @@ body {
   border: 1px solid var(--border-light);
   border-radius: var(--radius-xl);
   width: 100%;
-  max-width: 650px;
+  max-width: 620px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -812,12 +832,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.5rem;
+  padding: 1.15rem 1.4rem;
   border-bottom: 1px solid var(--border-light);
 }
 
 .modal-title {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--text-primary);
 }
@@ -826,18 +846,18 @@ body {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   cursor: pointer;
   line-height: 1;
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 1.4rem;
   overflow-y: auto;
 }
 
 .modal-footer {
-  padding: 1rem 1.5rem;
+  padding: 0.85rem 1.4rem;
   border-top: 1px solid var(--border-light);
   display: flex;
   justify-content: flex-end;
@@ -847,40 +867,40 @@ body {
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
-  padding: 1.1rem;
-  margin-bottom: 1.25rem;
+  padding: 1rem;
+  margin-bottom: 1.15rem;
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
 .memory-section {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
 }
 
 .memory-section h3 {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 800;
   color: var(--text-primary);
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.55rem;
 }
 
 .vocab-cloud {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .vocab-chip {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-light);
   color: var(--text-primary);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.3rem 0.7rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 9999px;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   box-shadow: var(--shadow-subtle);
 }
 
@@ -889,21 +909,21 @@ body {
   color: #FFFFFF;
   font-size: 0.65rem;
   font-weight: 800;
-  padding: 0.05rem 0.4rem;
+  padding: 0.05rem 0.35rem;
   border-radius: 9999px;
 }
 
 .pref-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .pref-item {
   background-color: var(--bg-subtle);
-  padding: 0.5rem 0.85rem;
+  padding: 0.45rem 0.8rem;
   border-radius: var(--radius-sm);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-primary);
   display: flex;
   justify-content: space-between;
@@ -930,15 +950,15 @@ body {
   box-shadow: var(--shadow-card);
 }
 
-body.presentation-mode .caregiver-panel,
 body.presentation-mode .app-header,
+body.presentation-mode .studio-card,
+body.presentation-mode .pipeline-section,
 body.presentation-mode .board-toolbar-actions,
 body.presentation-mode .fitzgerald-legend {
   display: none !important;
 }
 
-body.presentation-mode .main-layout {
-  grid-template-columns: 1fr;
+body.presentation-mode .main-content {
   padding: 5rem 2rem 2rem;
   max-width: 100vw;
 }
@@ -961,6 +981,11 @@ body.presentation-mode .card-label {
   display: none !important;
 }
 
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
 /* ==========================================================================
    Print Stylesheet for Physical Laminated AAC Boards
    ========================================================================== */
@@ -971,7 +996,8 @@ body.presentation-mode .card-label {
   }
 
   .app-header,
-  .caregiver-panel,
+  .studio-card,
+  .pipeline-section,
   .board-toolbar-actions,
   .fitzgerald-legend,
   .modal-backdrop,
@@ -979,13 +1005,13 @@ body.presentation-mode .card-label {
     display: none !important;
   }
 
-  .main-layout {
+  .main-content {
     display: block;
     padding: 0;
     margin: 0;
   }
 
-  .panel-card {
+  .board-card {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
