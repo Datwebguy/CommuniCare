@@ -1,7 +1,6 @@
 /**
  * CommuniCare: Interactive Frontend & Autonomous Pipeline Visualizer
- * Supports real-time pipeline traces, Web Speech audio, Firestore memory inspection,
- * and 2-Turn adaptive demonstration for the Google Hackathon.
+ * Modern, accessible, high-contrast AAC interface with Web Speech audio.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,13 +73,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const PRESET_ICONS = {
+    "morning_breakfast_walk": "🌅",
+    "medical_checkin": "🩺",
+    "school_transition": "🎒",
+    "evening_bedtime": "🌙"
+  };
+
   function renderPresets() {
     presetsContainer.innerHTML = '';
     currentPresets.forEach((p) => {
+      const icon = PRESET_ICONS[p.id] || "📋";
       const pill = document.createElement('div');
       pill.className = 'preset-pill';
       pill.innerHTML = `
-        <span class="preset-title">${p.title}</span>
+        <span class="preset-title">${icon} ${p.title}</span>
         <span class="preset-desc">${p.description}</span>
       `;
       pill.addEventListener('click', () => {
@@ -147,9 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnGenerate.disabled = true;
     btnGenerate.innerHTML = '<span>⚡ Processing Pipeline...</span>';
 
-    // Reset pipeline trace UI to running
     renderPipelineRunning();
-
     const startTime = performance.now();
 
     try {
@@ -183,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       isGenerating = false;
       btnGenerate.disabled = false;
-      btnGenerate.innerHTML = '<span class="btn-icon">⚡</span><span>Generate AAC Board</span>';
+      btnGenerate.innerHTML = '<span>⚡ Generate AAC Board</span>';
     }
   }
 
@@ -222,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="step-info">
             <div class="step-title">
               ${step.step_name} 
-              <span style="font-size:0.7rem; color:#38BDF8; margin-left:6px;">(${step.duration_ms}ms)</span>
+              <span style="font-size:0.7rem; color:var(--brand-primary); font-weight:700; margin-left:6px;">(${step.duration_ms}ms)</span>
             </div>
             <div class="step-desc">${step.output_summary || step.description}</div>
           </div>
@@ -260,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? card.svg_icon 
         : (card.image_url 
             ? `<img src="${card.image_url}" alt="${card.word}" loading="lazy" />`
-            : `<div style="font-size:2.5rem; font-weight:800; color:${card.color_code}">📝</div>`);
+            : `<div style="font-size:2.8rem; font-weight:800; color:${card.color_code}">📝</div>`);
 
       return `
         <div class="aac-card" 
@@ -281,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${card.subtext ? `<div class="card-subtext">${card.subtext}</div>` : ''}
 
           <div class="card-actions-bar">
-            <button class="btn-card-action action-success" onclick="event.stopPropagation(); window.handleFeedback('${board.board_id}', '${board.recipient_id}', '${card.id}', '${card.word}', 'worked_well')">
+            <button class="btn-card-action" onclick="event.stopPropagation(); window.handleFeedback('${board.board_id}', '${board.recipient_id}', '${card.id}', '${card.word}', 'worked_well')">
               👍 Worked Well
             </button>
           </div>
@@ -295,14 +300,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const word = cardEl.getAttribute('data-word');
         speakWord(word);
         
-        // Highlight animation
-        cardEl.style.transform = 'scale(1.05)';
-        setTimeout(() => { cardEl.style.transform = ''; }, 250);
+        cardEl.style.transform = 'scale(1.04)';
+        setTimeout(() => { cardEl.style.transform = ''; }, 200);
       });
     });
   }
 
-  // Text to Speech using browser Web Speech API
   function speakWord(text) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
@@ -320,17 +323,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardEl = cards[i];
       
       if (cardEl) {
-        cardEl.style.boxShadow = '0 0 0 5px #F59E0B';
+        cardEl.style.boxShadow = '0 0 0 4px #2563EB';
       }
       speakWord(card.word);
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 950));
       if (cardEl) {
         cardEl.style.boxShadow = '';
       }
     }
   }
 
-  // Global feedback handler
   window.handleFeedback = async function(boardId, recipientId, cardId, word, action) {
     try {
       const res = await fetch('/api/feedback', {
@@ -353,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Presentation View Toggle
   function togglePresentationMode(enable) {
     if (enable) {
       document.body.classList.add('presentation-mode');
@@ -365,7 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Recipient Memory Modal
   async function openMemoryModal() {
     const recipientId = recipientSelect.value;
     try {
@@ -386,13 +386,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderMemoryModal(profile) {
     memoryProfileSummary.innerHTML = `
-      <strong>${profile.name}</strong> (${profile.age_group.toUpperCase()}) &bull; 
-      Vocabulary Level: <span style="color:#38BDF8">${profile.vocabulary_level}</span> &bull; 
+      <strong style="color:var(--text-primary); font-size:1rem;">${profile.name}</strong> (${profile.age_group.toUpperCase()}) &bull; 
+      Vocabulary Level: <span style="color:var(--brand-primary); font-weight:700;">${profile.vocabulary_level.toUpperCase()}</span> &bull; 
       Max Board Cards: <strong>${profile.max_board_cards}</strong><br/>
-      <em>Caregiver Notes:</em> ${profile.caregiver_notes || 'None recorded.'}
+      <div style="margin-top:6px;"><em>Caregiver Notes:</em> ${profile.caregiver_notes || 'None recorded.'}</div>
     `;
 
-    // Learned Vocab Cloud
     learnedVocabCloud.innerHTML = profile.learned_vocabulary.map(word => {
       const count = profile.success_history[word] || 1;
       return `
@@ -403,31 +402,27 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Symbol preferences
     const prefs = Object.entries(profile.preferred_symbol_mappings);
     if (prefs.length === 0) {
-      symbolPrefList.innerHTML = '<div style="color:#94A3B8; font-size:0.8rem;">No custom symbol overrides yet.</div>';
+      symbolPrefList.innerHTML = '<div style="color:var(--text-secondary); font-size:0.8rem;">No custom symbol overrides yet.</div>';
     } else {
       symbolPrefList.innerHTML = prefs.map(([k, v]) => `
         <div class="pref-item">
           <span><strong>${k.toUpperCase()}</strong></span>
-          <span style="color:#38BDF8">Icon: ${v}</span>
+          <span style="color:var(--brand-primary); font-weight:700;">Icon: ${v}</span>
         </div>
       `).join('');
     }
   }
 
-  // 2-Turn Adaptive Demonstration Showcase (For Hackathon Judges)
   async function runTwoTurnAdaptiveDemo() {
     alert("Starting 2-Turn Adaptive Memory Demonstration:\n\nTurn 1: CommuniCare processes a morning routine message.\nFeedback: Caregiver reinforces 'medicine' & 'pancakes'.\nTurn 2: CommuniCare processes an afternoon reminder and automatically applies learned Firestore preferences!");
 
-    // Turn 1
     recipientSelect.value = 'leo_care';
     caregiverMessageInput.value = 'Good morning Leo! Please take your medicine with a glass of water, and then we will have warm pancakes for breakfast.';
     await handleGenerateBoard();
 
-    // Simulate Caregiver Reinforcement
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 1800));
     await fetch('/api/feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -440,8 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     });
 
-    // Turn 2
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 1200));
     caregiverMessageInput.value = 'Leo, remember to take your afternoon medicine before we go for a walk.';
     await handleGenerateBoard();
   }

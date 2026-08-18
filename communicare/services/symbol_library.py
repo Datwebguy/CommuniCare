@@ -1,6 +1,6 @@
 """
 AAC Symbol Library and Resolver.
-Provides open-license AAC pictograms (ARASAAC and curated high-contrast vector symbols)
+Provides open-license AAC pictograms (ARASAAC and premium high-contrast vector illustrations)
 with Fitzgerald Key color coding and graceful text-card fallback.
 """
 
@@ -8,70 +8,259 @@ import re
 from typing import Dict, List, Optional, Tuple
 from communicare.models import GrammarCategory, SymbolCard, SymbolSource
 
-# Fitzgerald Key color mappings: (Border/Accent color, Light BG color)
-FITZGERALD_PALETTE: Dict[GrammarCategory, Tuple[str, str]] = {
-    GrammarCategory.PEOPLE: ("#CA8A04", "#FEF9C3"),         # Yellow: People / Pronouns
-    GrammarCategory.VERB: ("#16A34A", "#DCFCE7"),           # Green: Verbs / Actions
-    GrammarCategory.NOUN: ("#EA580C", "#FFEDD5"),           # Orange: Nouns / Objects / Food
-    GrammarCategory.ADJECTIVE: ("#2563EB", "#DBEAFE"),      # Blue: Adjectives / Descriptors
-    GrammarCategory.SOCIAL_FEELINGS: ("#DB2777", "#FCE7F3"),# Pink: Social words / Feelings
-    GrammarCategory.TIME_SCHEDULE: ("#7C3AED", "#EDE9FE"),  # Purple: Time / Routines / Sequence
-    GrammarCategory.MISC: ("#475569", "#F1F5F9"),           # Slate: Prepositions / Miscellaneous
+# Fitzgerald Key clinical AAC color palette: (Border/Accent color, Soft Background color, Text color)
+FITZGERALD_PALETTE: Dict[GrammarCategory, Tuple[str, str, str]] = {
+    GrammarCategory.PEOPLE: ("#EAB308", "#FEFCE8", "#854D0E"),          # Yellow: People / Pronouns
+    GrammarCategory.VERB: ("#10B981", "#ECFDF5", "#065F46"),            # Green: Verbs / Actions
+    GrammarCategory.NOUN: ("#F97316", "#FFF7ED", "#9A3412"),            # Orange: Nouns / Objects / Food
+    GrammarCategory.ADJECTIVE: ("#3B82F6", "#EFF6FF", "#1E40AF"),       # Blue: Adjectives / Descriptors
+    GrammarCategory.SOCIAL_FEELINGS: ("#EC4899", "#FDF2F8", "#9D174D"), # Pink: Social words / Feelings
+    GrammarCategory.TIME_SCHEDULE: ("#8B5CF6", "#F5F3FF", "#5B21B6"),   # Purple: Time / Routines / Sequence
+    GrammarCategory.MISC: ("#64748B", "#F8FAFC", "#334155"),            # Slate: Prepositions / Misc
 }
 
-# Curated High-Contrast SVG Icon Definitions for Zero-Latency Offline AAC Boards
+# Premium, Friendly, High-Contrast Vector AAC Pictograms
 SVG_ICONS: Dict[str, str] = {
-    "medicine": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="8" width="28" height="48" rx="6" fill="#FEE2E2"/><path d="M18 24h28" stroke="#EF4444"/><path d="M32 30v16M24 38h16" stroke="#DC2626" stroke-width="4"/><path d="M26 4h12" stroke="#475569" stroke-width="3"/></svg>',
-    "water": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 12l6 40a4 4 0 004 4h12a4 4 0 004-4l6-40H16z" fill="#DBEAFE"/><path d="M18 26c6 2 10-2 14 0s8 2 14 0" stroke="#2563EB" stroke-width="3"/><path d="M32 6v6" stroke="#3B82F6"/></svg>',
-    "breakfast": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="34" r="22" fill="#FEF3C7"/><circle cx="32" cy="34" r="14" fill="#FFFFFF" stroke="#F59E0B"/><circle cx="32" cy="34" r="7" fill="#F59E0B"/><path d="M10 14h6v12h-6zM50 14h4v16h-4z" stroke="#64748B"/></svg>',
-    "pancakes": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="32" cy="46" rx="22" ry="8" fill="#FDE68A"/><ellipse cx="32" cy="36" rx="20" ry="7" fill="#FCD34D"/><ellipse cx="32" cy="26" rx="18" ry="6" fill="#FBBF24"/><rect x="28" y="16" width="8" height="6" fill="#F59E0B"/></svg>',
-    "eggs": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="32" cy="34" rx="20" ry="15" fill="#FFFFFF" stroke="#E2E8F0"/><circle cx="32" cy="34" r="8" fill="#F59E0B"/></svg>',
-    "walk": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="36" cy="14" r="6" fill="#22C55E"/><path d="M34 20l-4 16 8 8 6 12M30 36l-8 6-4 10M26 26l8 4 8-4"/></svg>',
-    "park": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 48v8M42 48v8" stroke="#78350F" stroke-width="4"/><path d="M22 20c-8 0-12 6-12 12s4 12 12 12 12-6 12-12-4-12-12-12z" fill="#86EFAC"/><path d="M42 16c-8 0-12 6-12 12s4 12 12 12 12-6 12-12-4-12-12-12z" fill="#4ADE80"/><path d="M6 56h52" stroke="#15803D" stroke-width="4"/></svg>',
-    "dog": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 30c-4-8-10-8-10 2 0 14 10 20 22 20s22-6 22-20c0-10-6-10-10-2" fill="#FED7AA"/><circle cx="26" cy="32" r="3" fill="#1E293B"/><circle cx="38" cy="32" r="3" fill="#1E293B"/><ellipse cx="32" cy="38" rx="4" ry="3" fill="#1E293B"/><path d="M32 41v3"/></svg>',
-    "eat": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 12v18a6 6 0 006 6h2v20h4V36h2a6 6 0 006-6V12" stroke="#16A34A"/><path d="M20 12v12M28 12v12"/><path d="M46 12c-4 0-6 4-6 10v14h4v20h4V12z" fill="#86EFAC" stroke="#16A34A"/></svg>',
-    "drink": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16l6 36a4 4 0 004 4h10a4 4 0 004-4l6-36H18z" fill="#BFDBFE"/><path d="M38 8l6-4M38 8v16" stroke="#2563EB" stroke-width="4"/></svg>',
-    "bathroom": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 28h32v12a14 14 0 01-14 14h-4a14 14 0 01-14-14V28z" fill="#E2E8F0"/><path d="M22 14h20v14H22zM28 54v4h8v-4" stroke="#475569"/></svg>',
-    "sleep": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><rect x="10" y="32" width="44" height="18" rx="3" fill="#DDD6FE"/><path d="M14 24h12v8H14z" fill="#FFFFFF"/><circle cx="20" cy="28" r="4" fill="#C4B5FD"/><path d="M40 12l8-4-8 8h8M34 18l6-3-6 6h6" stroke="#7C3AED" stroke-width="3"/></svg>',
-    "doctor": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="20" r="10" fill="#FEF08A"/><path d="M16 52c0-8.8 7.2-16 16-16s16 7.2 16 16H16z" fill="#BAE6FD"/><path d="M32 40v8M28 44h8" stroke="#DC2626" stroke-width="3.5"/></svg>',
-    "happy": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#FBCFE8"/><circle cx="24" cy="28" r="3" fill="#1E293B"/><circle cx="40" cy="28" r="3" fill="#1E293B"/><path d="M22 38c3 6 17 6 20 0" stroke="#DB2777" stroke-width="4"/></svg>',
-    "hurt": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#FEE2E2"/><path d="M22 26l6 4M42 26l-6 4M24 42c3-4 13-4 16 0" stroke="#DC2626" stroke-width="4"/><path d="M30 10l-4-4M34 10l4-4" stroke="#DC2626"/></svg>',
-    "help": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 10v44M10 32h44" stroke="#DC2626" stroke-width="6"/><circle cx="32" cy="32" r="26" stroke="#DC2626" stroke-width="3.5"/></svg>',
-    "stop": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="20,8 44,8 56,20 56,44 44,56 20,56 8,44 8,20" fill="#EF4444"/><text x="32" y="38" font-size="14" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="sans-serif">STOP</text></svg>',
-    "yes": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#DCFCE7"/><path d="M20 32l8 8 16-16" stroke="#16A34A" stroke-width="6"/></svg>',
-    "no": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#FEE2E2"/><path d="M20 20l24 24M44 20L20 44" stroke="#DC2626" stroke-width="6"/></svg>',
-    "clothes": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l12 6 12-6 10 12-6 6-4-4v28H20V26l-4 4-6-6 10-12z" fill="#FED7AA"/></svg>',
-    "shoes": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 36c4-12 16-16 26-10l12 4c4 2 6 6 6 10v6H12v-10z" fill="#CBD5E1"/><path d="M12 46h44v4H12z" fill="#475569"/></svg>',
-    "wash": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="28" cy="28" r="8" fill="#BAE6FD"/><circle cx="40" cy="36" r="6" fill="#BAE6FD"/><circle cx="22" cy="42" r="5" fill="#BAE6FD"/><path d="M16 16c8-6 24-6 32 0" stroke="#0284C7" stroke-width="3"/></svg>',
-    "time": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#EDE9FE"/><path d="M32 18v14l10 6" stroke="#7C3AED" stroke-width="4"/></svg>',
-    "car": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 36l4-14h28l4 14h6v12H8V36h6z" fill="#BFDBFE"/><circle cx="20" cy="48" r="5" fill="#1E293B"/><circle cx="44" cy="48" r="5" fill="#1E293B"/></svg>',
-    "home": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="32,10 8,30 16,30 16,54 48,54 48,30 56,30" fill="#FEF3C7"/><rect x="26" y="34" width="12" height="20" fill="#F59E0B"/></svg>',
-    "school": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="32,8 10,22 54,22" fill="#E2E8F0"/><rect x="14" y="22" width="36" height="32" fill="#F8FAFC"/><path d="M32 30v14M26 36h12" stroke="#2563EB" stroke-width="3"/></svg>',
-    "music": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 46a6 6 0 11-12 0 6 6 0 0112 0zm32-6a6 6 0 11-12 0 6 6 0 0112 0z" fill="#FBCFE8"/><path d="M22 46V18l32-6v28M22 26l32-6" stroke="#DB2777" stroke-width="4"/></svg>',
-    "book": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16c8-4 18-4 22 2 4-6 14-6 22-2v36c-8-4-18-4-22 2-4-6-14-6-22-2V16z" fill="#FED7AA"/><path d="M32 18v36" stroke="#C2410C" stroke-width="3"/></svg>',
-    "play": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#DCFCE7"/><polygon points="26,20 44,32 26,44" fill="#16A34A"/></svg>',
-    "listen": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 26a12 12 0 0124 0v16a6 6 0 01-12 0" stroke="#2563EB" stroke-width="4"/><circle cx="20" cy="42" r="5" fill="#93C5FD"/><circle cx="44" cy="42" r="5" fill="#93C5FD"/></svg>',
-    "quiet": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="24" r="12" fill="#E2E8F0"/><path d="M32 28v20M24 38h16" stroke="#475569" stroke-width="4"/></svg>',
-    "caregiver": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="8" fill="#FEF08A"/><circle cx="42" cy="18" r="6" fill="#FEF08A"/><path d="M10 52c0-8 6-14 14-14s14 6 14 14H10z" fill="#FDE047"/><path d="M32 52c0-6 4-10 10-10s10 4 10 10H32z" fill="#FACC15"/></svg>',
-    "friend": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="22" cy="22" r="7" fill="#FEF08A"/><circle cx="42" cy="22" r="7" fill="#FEF08A"/><path d="M10 52c0-7 5-12 12-12s12 5 12 12H10zm20 0c0-7 5-12 12-12s12 5 12 12H30z" fill="#FDE047"/></svg>',
-    "bus": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="40" height="34" rx="4" fill="#FDE047"/><rect x="16" y="20" width="32" height="12" fill="#BAE6FD"/><circle cx="20" cy="48" r="4" fill="#1E293B"/><circle cx="44" cy="48" r="4" fill="#1E293B"/></svg>',
-    "teeth": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16c-6 0-10 8-8 20s4 18 10 18 6-10 10-10 4 10 10 10 8-6 10-18-2-20-8-20-8 4-12 4-8-4-12-4z" fill="#FFFFFF" stroke="#64748B"/><path d="M12 14l40 36" stroke="#0284C7" stroke-width="3"/></svg>',
-    "snack": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="34" r="18" fill="#FED7AA"/><circle cx="26" cy="28" r="2.5" fill="#7C2D12"/><circle cx="38" cy="30" r="2.5" fill="#7C2D12"/><circle cx="30" cy="40" r="2.5" fill="#7C2D12"/><circle cx="40" cy="40" r="2" fill="#7C2D12"/></svg>',
-    "apple": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M32 20c-6-6-16-4-18 6-2 14 8 26 18 26s20-12 18-26c-2-10-12-12-18-6z" fill="#F87171"/><path d="M32 20c0-6 4-10 8-10" stroke="#15803D" stroke-width="3"/></svg>',
-    "juice": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><rect x="18" y="20" width="28" height="34" rx="3" fill="#FDBA74"/><polygon points="18,20 26,10 38,10 46,20" fill="#FB923C"/><path d="M32 6l10-4" stroke="#EA580C" stroke-width="3.5"/></svg>',
-    "milk": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 14h20v6H22z" fill="#E2E8F0"/><path d="M20 20l-4 6v28a2 2 0 002 2h28a2 2 0 002-2V26l-4-6H20z" fill="#F8FAFC"/><text x="32" y="42" font-size="10" font-weight="bold" text-anchor="middle" fill="#0284C7">MILK</text></svg>',
-    "lunch": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="22" width="40" height="28" rx="4" fill="#FED7AA"/><path d="M12 28h40M26 14h12v8H26z" stroke="#C2410C"/></svg>',
-    "tired": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#F3E8FF"/><path d="M22 28h8M34 28h8M28 40a4 4 0 108 0 4 4 0 00-8 0" stroke="#7C3AED" stroke-width="3.5"/><path d="M46 14l6-3-6 6h6" stroke="#9333EA"/></svg>',
-    "calm": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#E0F2FE"/><path d="M22 28c2-2 6-2 8 0M34 28c2-2 6-2 8 0M26 38c3 2 9 2 12 0" stroke="#0284C7" stroke-width="3.5"/></svg>',
-    "now": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#EDE9FE"/><path d="M32 20v24M24 36l8 8 8-8" stroke="#7C3AED" stroke-width="4"/></svg>',
-    "later": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#EDE9FE"/><path d="M20 32h24M36 24l8 8-8 8" stroke="#7C3AED" stroke-width="4"/></svg>',
-    "all_done": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#DCFCE7"/><path d="M18 34l8 8 20-20" stroke="#16A34A" stroke-width="5"/><path d="M12 50h40" stroke="#16A34A" stroke-width="4"/></svg>',
-    "more": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="32" cy="32" r="24" fill="#FCE7F3"/><path d="M32 18v28M18 32h28" stroke="#DB2777" stroke-width="5"/></svg>',
-    "toilet": '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 28h28v12a14 14 0 01-14 14h0a14 14 0 01-14-14V28z" fill="#E2E8F0"/><path d="M22 14h20v14H22z" stroke="#475569"/></svg>',
+    "medicine": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="24" width="36" height="46" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="3"/>
+      <rect x="28" y="12" width="24" height="12" rx="4" fill="#E2E8F0" stroke="#64748B" stroke-width="3"/>
+      <rect x="36" y="34" width="8" height="24" rx="2" fill="#EF4444"/>
+      <rect x="28" y="42" width="24" height="8" rx="2" fill="#EF4444"/>
+      <circle cx="56" cy="28" r="8" fill="#FBBF24" stroke="#D97706" stroke-width="2.5"/>
+      <line x1="56" y1="23" x2="56" y2="33" stroke="#92400E" stroke-width="2" stroke-linecap="round"/>
+    </svg>''',
+    
+    "water": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22 18L28 66C28.5 70 32 72 36 72H44C48 72 51.5 70 52 66L58 18H22Z" fill="#E0F2FE" stroke="#0284C7" stroke-width="3"/>
+      <path d="M25 38C30 35 34 40 40 38C46 36 50 40 55 38L57 26H23L25 38Z" fill="#38BDF8" opacity="0.85"/>
+      <path d="M38 12C38 12 34 22 40 22C46 22 42 12 42 12" stroke="#0284C7" stroke-width="3" stroke-linecap="round"/>
+    </svg>''',
+
+    "pancakes": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="40" cy="58" rx="28" ry="10" fill="#FDE68A" stroke="#D97706" stroke-width="3"/>
+      <ellipse cx="40" cy="46" rx="26" ry="9" fill="#FCD34D" stroke="#D97706" stroke-width="3"/>
+      <ellipse cx="40" cy="34" rx="24" ry="8" fill="#FBBF24" stroke="#D97706" stroke-width="3"/>
+      <rect x="34" y="20" width="12" height="8" rx="2" fill="#F59E0B" stroke="#B45309" stroke-width="2"/>
+      <path d="M38 28C38 34 32 36 32 44" stroke="#D97706" stroke-width="3" stroke-linecap="round"/>
+    </svg>''',
+
+    "breakfast": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="44" r="28" fill="#FFFBEB" stroke="#F59E0B" stroke-width="3.5"/>
+      <ellipse cx="40" cy="44" rx="18" ry="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2.5"/>
+      <circle cx="40" cy="44" r="9" fill="#F59E0B"/>
+      <path d="M14 16V32M10 20H18" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>
+      <path d="M66 16V32M62 20C62 26 66 26 66 26" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>
+    </svg>''',
+
+    "eggs": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="40" cy="42" rx="26" ry="20" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3.5"/>
+      <circle cx="38" cy="40" r="11" fill="#F59E0B"/>
+      <circle cx="35" cy="37" r="3" fill="#FEF08A"/>
+    </svg>''',
+
+    "walk": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="42" cy="18" r="8" fill="#10B981" stroke="#047857" stroke-width="2.5"/>
+      <path d="M38 28L32 44L44 48L52 68" stroke="#047857" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M32 44L22 52L16 68" stroke="#047857" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M30 34L44 38L54 32" stroke="#047857" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M12 72H68" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+    </svg>''',
+
+    "park": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="24" y="44" width="8" height="24" rx="2" fill="#78350F"/>
+      <circle cx="28" cy="34" r="18" fill="#86EFAC" stroke="#15803D" stroke-width="3"/>
+      <rect x="48" y="40" width="8" height="28" rx="2" fill="#78350F"/>
+      <circle cx="52" cy="30" r="20" fill="#4ADE80" stroke="#15803D" stroke-width="3"/>
+      <path d="M8 68H72" stroke="#16A34A" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="62" cy="14" r="6" fill="#FDE047"/>
+    </svg>''',
+
+    "dog": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="42" r="22" fill="#FED7AA" stroke="#EA580C" stroke-width="3"/>
+      <ellipse cx="20" cy="32" rx="6" ry="12" fill="#FB923C" stroke="#EA580C" stroke-width="2.5"/>
+      <ellipse cx="60" cy="32" rx="6" ry="12" fill="#FB923C" stroke="#EA580C" stroke-width="2.5"/>
+      <circle cx="32" cy="38" r="4" fill="#1E293B"/>
+      <circle cx="48" cy="38" r="4" fill="#1E293B"/>
+      <ellipse cx="40" cy="48" rx="6" ry="4" fill="#1E293B"/>
+      <path d="M40 52V56M36 56C38 58 42 58 44 56" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>''',
+
+    "morning": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 56H68" stroke="#7C3AED" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M22 56C22 44 30 34 40 34C50 34 58 44 58 56H22Z" fill="#FDE047" stroke="#EAB308" stroke-width="3"/>
+      <line x1="40" y1="16" x2="40" y2="26" stroke="#F59E0B" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="20" y1="24" x2="26" y2="30" stroke="#F59E0B" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="60" y1="24" x2="54" y2="30" stroke="#F59E0B" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M24 64H56" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round"/>
+    </svg>''',
+
+    "eat": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 16V36C20 42 26 46 30 46V68" stroke="#10B981" stroke-width="4" stroke-linecap="round"/>
+      <path d="M25 16V32M15 16V32" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M56 16C50 16 46 22 46 32C46 42 50 46 54 46V68" stroke="#10B981" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="40" cy="50" r="16" fill="#D1FAE5" opacity="0.6"/>
+    </svg>''',
+
+    "drink": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="26" y="24" width="28" height="42" rx="4" fill="#DBEAFE" stroke="#2563EB" stroke-width="3.5"/>
+      <path d="M26 38H54" stroke="#3B82F6" stroke-width="2.5"/>
+      <path d="M48 10L56 18M48 10V24" stroke="#EA580C" stroke-width="4" stroke-linecap="round"/>
+    </svg>''',
+
+    "bathroom": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="26" y="16" width="28" height="20" rx="3" fill="#E2E8F0" stroke="#475569" stroke-width="3"/>
+      <path d="M20 36H60C60 52 50 64 40 64C30 64 20 52 20 36Z" fill="#F8FAFC" stroke="#475569" stroke-width="3.5"/>
+      <rect x="34" y="64" width="12" height="6" fill="#64748B"/>
+    </svg>''',
+
+    "toilet": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="26" y="16" width="28" height="20" rx="3" fill="#E2E8F0" stroke="#475569" stroke-width="3"/>
+      <path d="M20 36H60C60 52 50 64 40 64C30 64 20 52 20 36Z" fill="#F8FAFC" stroke="#475569" stroke-width="3.5"/>
+      <rect x="34" y="64" width="12" height="6" fill="#64748B"/>
+    </svg>''',
+
+    "sleep": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="14" y="42" width="52" height="22" rx="4" fill="#EDE9FE" stroke="#7C3AED" stroke-width="3.5"/>
+      <rect x="18" y="32" width="16" height="12" rx="3" fill="#FFFFFF" stroke="#A78BFA" stroke-width="2.5"/>
+      <circle cx="26" cy="38" r="4" fill="#C4B5FD"/>
+      <path d="M48 18L58 14L48 24H58" stroke="#8B5CF6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M40 26L48 23L40 31H48" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>''',
+
+    "doctor": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="24" r="12" fill="#FEF08A" stroke="#CA8A04" stroke-width="3"/>
+      <path d="M20 66C20 52 28 44 40 44C52 44 60 52 60 66H20Z" fill="#E0F2FE" stroke="#0284C7" stroke-width="3.5"/>
+      <rect x="37" y="50" width="6" height="14" rx="1" fill="#DC2626"/>
+      <rect x="33" y="54" width="14" height="6" rx="1" fill="#DC2626"/>
+      <path d="M28 24C28 14 52 14 52 24" stroke="#0284C7" stroke-width="3" stroke-linecap="round"/>
+    </svg>''',
+
+    "happy": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="30" fill="#FCE7F3" stroke="#DB2777" stroke-width="3.5"/>
+      <circle cx="30" cy="34" r="4" fill="#831843"/>
+      <circle cx="50" cy="34" r="4" fill="#831843"/>
+      <path d="M26 46C30 56 50 56 54 46" stroke="#DB2777" stroke-width="4.5" stroke-linecap="round"/>
+    </svg>''',
+
+    "hurt": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="30" fill="#FEE2E2" stroke="#DC2626" stroke-width="3.5"/>
+      <path d="M26 30L34 36M46 36L54 30" stroke="#991B1B" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M28 52C34 46 46 46 52 52" stroke="#DC2626" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M38 12L34 6M42 12L46 6" stroke="#DC2626" stroke-width="3" stroke-linecap="round"/>
+    </svg>''',
+
+    "help": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="30" fill="#FEF2F2" stroke="#EF4444" stroke-width="4"/>
+      <rect x="35" y="20" width="10" height="40" rx="2" fill="#DC2626"/>
+      <rect x="20" y="35" width="40" height="10" rx="2" fill="#DC2626"/>
+    </svg>''',
+
+    "stop": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="26,10 54,10 68,24 68,56 54,70 26,70 12,56 12,24" fill="#EF4444" stroke="#B91C1C" stroke-width="3"/>
+      <text x="40" y="47" font-size="16" font-weight="900" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" letter-spacing="1">STOP</text>
+    </svg>''',
+
+    "yes": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="30" fill="#DCFCE7" stroke="#16A34A" stroke-width="3.5"/>
+      <path d="M26 40L36 50L54 28" stroke="#15803D" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>''',
+
+    "no": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="30" fill="#FEE2E2" stroke="#DC2626" stroke-width="3.5"/>
+      <path d="M26 26L54 54M54 26L26 54" stroke="#B91C1C" stroke-width="6" stroke-linecap="round"/>
+    </svg>''',
+
+    "clothes": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 18L40 24L54 18L66 32L58 40L54 36V66H26V36L22 40L14 32L26 18Z" fill="#FED7AA" stroke="#EA580C" stroke-width="3.5" stroke-linejoin="round"/>
+      <circle cx="40" cy="38" r="2.5" fill="#9A3412"/>
+      <circle cx="40" cy="48" r="2.5" fill="#9A3412"/>
+    </svg>''',
+
+    "shoes": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 46C20 30 36 26 50 32L64 36C68 38 70 42 70 48V56H16V46Z" fill="#E2E8F0" stroke="#475569" stroke-width="3.5" stroke-linejoin="round"/>
+      <rect x="16" y="56" width="54" height="6" rx="2" fill="#334155"/>
+      <path d="M36 34L42 46M44 36L50 46" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>''',
+
+    "wash": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="36" r="10" fill="#BAE6FD" stroke="#0284C7" stroke-width="2.5"/>
+      <circle cx="48" cy="44" r="8" fill="#BAE6FD" stroke="#0284C7" stroke-width="2.5"/>
+      <circle cx="28" cy="52" r="6" fill="#BAE6FD" stroke="#0284C7" stroke-width="2"/>
+      <path d="M22 22C32 14 50 14 60 22" stroke="#0369A1" stroke-width="4" stroke-linecap="round"/>
+    </svg>''',
+
+    "time": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="30" fill="#F5F3FF" stroke="#7C3AED" stroke-width="3.5"/>
+      <path d="M40 22V40L52 46" stroke="#6D28D9" stroke-width="4.5" stroke-linecap="round"/>
+      <circle cx="40" cy="40" r="3" fill="#5B21B6"/>
+    </svg>''',
+
+    "school": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="40,12 14,28 66,28" fill="#FEE2E2" stroke="#DC2626" stroke-width="3"/>
+      <rect x="18" y="28" width="44" height="38" fill="#F8FAFC" stroke="#475569" stroke-width="3"/>
+      <rect x="34" y="46" width="12" height="20" fill="#D97706"/>
+      <circle cx="40" cy="22" r="4" fill="#FBBF24"/>
+    </svg>''',
+
+    "bus": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="14" y="18" width="52" height="42" rx="6" fill="#FDE047" stroke="#CA8A04" stroke-width="3.5"/>
+      <rect x="20" y="26" width="40" height="14" rx="2" fill="#E0F2FE" stroke="#0284C7" stroke-width="2"/>
+      <circle cx="26" cy="60" r="6" fill="#1E293B" stroke="#0F172A" stroke-width="2"/>
+      <circle cx="54" cy="60" r="6" fill="#1E293B" stroke="#0F172A" stroke-width="2"/>
+    </svg>''',
+
+    "teeth": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 22C20 22 14 30 16 46C18 58 24 64 30 64C36 64 36 50 40 50C44 50 44 64 50 64C56 64 62 58 64 46C66 30 60 22 54 22C46 22 44 28 40 28C36 28 34 22 26 22Z" fill="#FFFFFF" stroke="#64748B" stroke-width="3.5"/>
+      <path d="M16 20L64 60" stroke="#0284C7" stroke-width="4" stroke-linecap="round"/>
+    </svg>''',
+
+    "apple": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M40 26C32 18 18 20 18 36C18 54 32 66 40 66C48 66 62 54 62 36C62 20 48 18 40 26Z" fill="#EF4444" stroke="#B91C1C" stroke-width="3.5"/>
+      <path d="M40 26C40 16 46 14 50 12" stroke="#15803D" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="48" cy="34" r="3" fill="#FCA5A5"/>
+    </svg>''',
+
+    "juice": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="24" y="24" width="32" height="44" rx="4" fill="#FED7AA" stroke="#EA580C" stroke-width="3.5"/>
+      <polygon points="24,24 34,14 46,14 56,24" fill="#FB923C" stroke="#EA580C" stroke-width="2.5"/>
+      <path d="M40 8L50 4" stroke="#C2410C" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="40" cy="46" r="6" fill="#F97316"/>
+    </svg>''',
+
+    "book": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 22C24 16 36 16 40 22C44 16 56 16 66 22V64C56 58 44 58 40 64C36 58 24 58 14 64V22Z" fill="#FED7AA" stroke="#EA580C" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M40 24V64" stroke="#9A3412" stroke-width="3.5"/>
+    </svg>''',
+
+    "quiet": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="32" r="16" fill="#E0F2FE" stroke="#0284C7" stroke-width="3"/>
+      <path d="M40 38V64M30 52H50" stroke="#0369A1" stroke-width="5" stroke-linecap="round"/>
+    </svg>''',
+
+    "music": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="28" cy="56" r="8" fill="#FBCFE8" stroke="#DB2777" stroke-width="3"/>
+      <circle cx="56" cy="48" r="8" fill="#FBCFE8" stroke="#DB2777" stroke-width="3"/>
+      <path d="M36 56V24L64 16V48" stroke="#BE185D" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M36 34L64 26" stroke="#BE185D" stroke-width="4.5"/>
+    </svg>''',
+
+    "snack": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="42" r="22" fill="#FED7AA" stroke="#EA580C" stroke-width="3.5"/>
+      <circle cx="32" cy="36" r="3.5" fill="#7C2D12"/>
+      <circle cx="48" cy="38" r="3.5" fill="#7C2D12"/>
+      <circle cx="38" cy="50" r="3.5" fill="#7C2D12"/>
+      <circle cx="48" cy="50" r="2.5" fill="#7C2D12"/>
+    </svg>''',
+    
+    "tired": '''<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="30" fill="#F5F3FF" stroke="#7C3AED" stroke-width="3.5"/>
+      <path d="M26 34H36M44 34H54" stroke="#6D28D9" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M34 50C36 54 44 54 46 50" stroke="#7C3AED" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M56 18L64 14L56 22H64" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>'''
 }
 
-# ARASAAC Canonical Catalog Mappings (Open-license AAC Pictograms)
-# Arasaac IDs can also be resolved dynamically from ARASAAC API
+# ARASAAC Canonical Catalog
 ARASAAC_CATALOG: Dict[str, Dict] = {
     "medicine": {"arasaac_id": 2439, "category": GrammarCategory.NOUN, "tags": ["pills", "pill", "medication", "tablet", "syrup", "capsule"]},
     "water": {"arasaac_id": 2459, "category": GrammarCategory.NOUN, "tags": ["drink", "glass", "beverage", "hydration"]},
@@ -81,6 +270,7 @@ ARASAAC_CATALOG: Dict[str, Dict] = {
     "walk": {"arasaac_id": 2552, "category": GrammarCategory.VERB, "tags": ["walking", "step", "stroll", "go"]},
     "park": {"arasaac_id": 2865, "category": GrammarCategory.NOUN, "tags": ["outside", "garden", "playground", "nature"]},
     "dog": {"arasaac_id": 2465, "category": GrammarCategory.NOUN, "tags": ["dogs", "puppy", "pet", "animal"]},
+    "morning": {"arasaac_id": 2470, "category": GrammarCategory.TIME_SCHEDULE, "tags": ["am", "sunrise", "early", "routine"]},
     "eat": {"arasaac_id": 2363, "category": GrammarCategory.VERB, "tags": ["eating", "food", "meal", "dine", "snack"]},
     "drink": {"arasaac_id": 2358, "category": GrammarCategory.VERB, "tags": ["drinking", "sip", "gulp", "thirst"]},
     "bathroom": {"arasaac_id": 2404, "category": GrammarCategory.NOUN, "tags": ["toilet", "potty", "washroom", "restroom", "pee", "poop"]},
@@ -97,34 +287,20 @@ ARASAAC_CATALOG: Dict[str, Dict] = {
     "shoes": {"arasaac_id": 2525, "category": GrammarCategory.NOUN, "tags": ["sneakers", "boots", "footwear"]},
     "wash": {"arasaac_id": 2555, "category": GrammarCategory.VERB, "tags": ["hands", "clean", "soap", "sink", "washing"]},
     "time": {"arasaac_id": 2542, "category": GrammarCategory.TIME_SCHEDULE, "tags": ["clock", "schedule", "hour", "minute"]},
-    "car": {"arasaac_id": 2408, "category": GrammarCategory.NOUN, "tags": ["drive", "ride", "auto", "vehicle"]},
-    "home": {"arasaac_id": 2436, "category": GrammarCategory.NOUN, "tags": ["house", "room", "stay"]},
     "school": {"arasaac_id": 2521, "category": GrammarCategory.NOUN, "tags": ["class", "study", "teacher", "learning"]},
-    "music": {"arasaac_id": 2467, "category": GrammarCategory.NOUN, "tags": ["song", "listen", "dance", "audio"]},
-    "book": {"arasaac_id": 2403, "category": GrammarCategory.NOUN, "tags": ["read", "story", "reading"]},
-    "play": {"arasaac_id": 2496, "category": GrammarCategory.VERB, "tags": ["game", "toy", "fun", "playing"]},
-    "listen": {"arasaac_id": 2454, "category": GrammarCategory.VERB, "tags": ["hear", "sound", "music"]},
-    "quiet": {"arasaac_id": 2506, "category": GrammarCategory.ADJECTIVE, "tags": ["shh", "calm", "silence", "soft"]},
-    "caregiver": {"arasaac_id": 2410, "category": GrammarCategory.PEOPLE, "tags": ["mom", "dad", "parent", "helper", "nurse", "aide"]},
-    "friend": {"arasaac_id": 2430, "category": GrammarCategory.PEOPLE, "tags": ["buddy", "peer", "playmate"]},
     "bus": {"arasaac_id": 2406, "category": GrammarCategory.NOUN, "tags": ["transit", "schoolbus", "ride"]},
     "teeth": {"arasaac_id": 2540, "category": GrammarCategory.NOUN, "tags": ["brush teeth", "toothbrush", "mouth", "dental"]},
-    "snack": {"arasaac_id": 2530, "category": GrammarCategory.NOUN, "tags": ["cookie", "treat", "crackers", "bites"]},
     "apple": {"arasaac_id": 2335, "category": GrammarCategory.NOUN, "tags": ["fruit", "healthy", "snack"]},
     "juice": {"arasaac_id": 2447, "category": GrammarCategory.NOUN, "tags": ["orange juice", "apple juice", "drink"]},
-    "milk": {"arasaac_id": 2463, "category": GrammarCategory.NOUN, "tags": ["dairy", "drink", "cup"]},
-    "lunch": {"arasaac_id": 2458, "category": GrammarCategory.NOUN, "tags": ["afternoon meal", "food", "sandwich"]},
-    "tired": {"arasaac_id": 2543, "category": GrammarCategory.SOCIAL_FEELINGS, "tags": ["sleepy", "exhausted", "rest"]},
-    "calm": {"arasaac_id": 2407, "category": GrammarCategory.ADJECTIVE, "tags": ["peaceful", "relax", "breathe", "gentle"]},
-    "now": {"arasaac_id": 2470, "category": GrammarCategory.TIME_SCHEDULE, "tags": ["immediate", "first", "current"]},
-    "later": {"arasaac_id": 2451, "category": GrammarCategory.TIME_SCHEDULE, "tags": ["then", "after", "next"]},
-    "all_done": {"arasaac_id": 2426, "category": GrammarCategory.SOCIAL_FEELINGS, "tags": ["finished", "complete", "done", "stop"]},
-    "more": {"arasaac_id": 2466, "category": GrammarCategory.SOCIAL_FEELINGS, "tags": ["again", "extra", "add"]},
+    "book": {"arasaac_id": 2403, "category": GrammarCategory.NOUN, "tags": ["read", "story", "reading"]},
+    "quiet": {"arasaac_id": 2506, "category": GrammarCategory.ADJECTIVE, "tags": ["shh", "calm", "silence", "soft"]},
+    "music": {"arasaac_id": 2467, "category": GrammarCategory.NOUN, "tags": ["song", "listen", "dance", "audio"]},
+    "snack": {"arasaac_id": 2530, "category": GrammarCategory.NOUN, "tags": ["cookie", "treat", "crackers", "bites"]},
+    "tired": {"arasaac_id": 2543, "category": GrammarCategory.SOCIAL_FEELINGS, "tags": ["sleepy", "exhausted", "rest"]}
 }
 
 
 def normalize_term(term: str) -> str:
-    """Normalize input term for fuzzy matching."""
     cleaned = re.sub(r"[^a-zA-Z0-9\s_]", "", term.lower().strip())
     return cleaned.replace(" ", "_")
 
@@ -146,21 +322,15 @@ class SymbolResolver:
         category_hint: Optional[str] = None,
         preferred_symbol_id: Optional[str] = None
     ) -> SymbolCard:
-        """
-        Resolves a single concept into a complete SymbolCard.
-        Applies recipient preference override if supplied.
-        """
         norm_concept = normalize_term(concept)
 
         # 1. Direct match in local catalog
         if norm_concept in self.catalog:
             item = self.catalog[norm_concept]
             category = item["category"]
-            color_code, bg_color = self.palette[category]
+            color_code, bg_color, _ = self.palette[category]
             arasaac_id = item.get("arasaac_id")
             svg_icon = self.svg_icons.get(norm_concept)
-            
-            # ARASAAC Open-CDN image URL
             image_url = f"https://static.arasaac.org/pictograms/{arasaac_id}/{arasaac_id}_500.png" if arasaac_id else None
 
             return SymbolCard(
@@ -182,7 +352,7 @@ class SymbolResolver:
         for key, item in self.catalog.items():
             if norm_concept in item.get("tags", []) or any(norm_concept in tag for tag in item.get("tags", [])):
                 category = item["category"]
-                color_code, bg_color = self.palette[category]
+                color_code, bg_color, _ = self.palette[category]
                 arasaac_id = item.get("arasaac_id")
                 svg_icon = self.svg_icons.get(key)
                 image_url = f"https://static.arasaac.org/pictograms/{arasaac_id}/{arasaac_id}_500.png" if arasaac_id else None
@@ -205,9 +375,7 @@ class SymbolResolver:
 
         # 3. Category classification & Fallback Card
         category = self._infer_category(concept, category_hint)
-        color_code, bg_color = self.palette[category]
-        
-        # Check if we have an SVG icon under sanitized name
+        color_code, bg_color, _ = self.palette[category]
         svg_icon = self.svg_icons.get(norm_concept)
 
         return SymbolCard(
@@ -227,7 +395,6 @@ class SymbolResolver:
         )
 
     def _infer_category(self, concept: str, category_hint: Optional[str]) -> GrammarCategory:
-        """Infer grammatical category for Fitzgerald Key color coding."""
         if category_hint:
             try:
                 return GrammarCategory(category_hint.lower())
@@ -248,7 +415,6 @@ class SymbolResolver:
         return GrammarCategory.NOUN
 
     def search_symbols(self, query: str, limit: int = 10) -> List[Dict]:
-        """Search available symbols by keyword."""
         q = normalize_term(query)
         results = []
         for key, item in self.catalog.items():
@@ -265,5 +431,4 @@ class SymbolResolver:
         return results
 
 
-# Singleton instance
 symbol_resolver = SymbolResolver()

@@ -18,23 +18,22 @@
     <header class="app-header">
       <div class="header-brand">
         <div class="brand-icon">
-          <svg viewBox="0 0 32 32" width="28" height="28" fill="none">
-            <rect width="32" height="32" rx="8" fill="#1E293B"/>
-            <rect x="6" y="6" width="9" height="9" rx="2" fill="#FACC15"/>
-            <rect x="17" y="6" width="9" height="9" rx="2" fill="#22C55E"/>
-            <rect x="6" y="17" width="9" height="9" rx="2" fill="#F97316"/>
-            <rect x="17" y="17" width="9" height="9" rx="2" fill="#3B82F6"/>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
           </svg>
         </div>
         <div class="brand-titles">
           <h1 class="brand-name">CommuniCare</h1>
-          <span class="brand-tagline">Autonomous AAC Picture Board Pipeline</span>
+          <span class="brand-tagline">Autonomous AAC Picture Board Generator</span>
         </div>
       </div>
 
-      <div class="header-badges">
-        <span class="track-badge">Taskmaster Track · Google Hackathon</span>
-        <div id="backend-status" class="status-pill status-live" title="Cloud Run & Firestore Ready">
+      <div class="header-center-badges">
+        <span class="track-badge">Taskmaster Track &bull; Google Hackathon</span>
+        <div id="backend-status" class="status-pill" title="System Ready">
           <span class="status-dot"></span>
           <span id="status-text">Cloud Engine Active</span>
         </div>
@@ -42,7 +41,7 @@
 
       <div class="header-actions">
         <button id="btn-memory-view" class="btn btn-secondary btn-sm" title="View Firestore Memory">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Recipient Memory
         </button>
         <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run 2-Turn Adaptation Test">
@@ -54,12 +53,12 @@
     <!-- Main Content Area -->
     <main class="main-layout">
 
-      <!-- Left Column: Caregiver Input & Configuration -->
+      <!-- Left Column: Caregiver Studio -->
       <section class="caregiver-panel">
         <div class="panel-card">
           <div class="panel-header">
-            <h2 class="panel-title">1. Caregiver Message</h2>
-            <span class="panel-subtitle">Natural speech or care notes</span>
+            <h2 class="panel-title">Caregiver Studio</h2>
+            <span class="panel-subtitle">Enter natural messages or pick a care routine</span>
           </div>
 
           <!-- Recipient Profile Selector -->
@@ -69,8 +68,8 @@
             </label>
             <div class="select-wrapper">
               <select id="recipient-select" class="form-select">
-                <option value="leo_care">Leo (Age 7 · Child · Basic Vocab)</option>
-                <option value="maya_adult">Maya (Adult · Stroke Recovery · Intermediate)</option>
+                <option value="leo_care">👦 Leo (Age 7 &bull; Child &bull; Basic AAC)</option>
+                <option value="maya_adult">👩 Maya (Adult &bull; Stroke Recovery &bull; Intermediate)</option>
               </select>
             </div>
           </div>
@@ -85,30 +84,29 @@
 
           <!-- Raw Message Input -->
           <div class="form-group">
-            <label for="caregiver-message" class="form-label">Enter Message to Communicate:</label>
+            <label for="caregiver-message" class="form-label">Message to Communicate:</label>
             <div class="textarea-wrapper">
               <textarea
                 id="caregiver-message"
                 class="form-textarea"
                 rows="4"
-                placeholder="e.g., 'Good morning Leo! Please take your medicine with water, then we will have warm pancakes for breakfast and go for a walk to the park to see the dogs.'"
+                placeholder="e.g., 'Good morning Leo! Please take your medicine with a glass of water, then eat pancakes for breakfast.'"
               ></textarea>
             </div>
           </div>
 
-          <!-- Generation Options -->
+          <!-- Generation Options & Action -->
           <div class="form-row">
             <div class="form-group half-width">
               <label for="style-select" class="form-label">Simplification Style:</label>
               <select id="style-select" class="form-select">
                 <option value="core_words">Core Words (High Impact)</option>
-                <option value="step_by_step">Step-by-Step Routine</option>
+                <option value="step_by_step">Step-by-Step Sequence</option>
               </select>
             </div>
             <div class="form-group half-width align-end">
               <button id="btn-generate" class="btn btn-primary btn-block">
-                <span class="btn-icon">⚡</span>
-                <span>Generate AAC Board</span>
+                <span>⚡ Generate AAC Board</span>
               </button>
             </div>
           </div>
@@ -173,21 +171,21 @@
 
             <div class="board-toolbar-actions">
               <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 Speak All
               </button>
               <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical AAC communication sheet">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Print Sheet
               </button>
               <button id="btn-fullscreen" class="btn btn-secondary btn-sm" title="Fullscreen Presentation View for Recipient">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                 Presentation View
               </button>
             </div>
           </div>
 
-          <!-- Simplified Sentence Banner -->
+          <!-- Simplified Plain Language Banner -->
           <div id="simplified-banner" class="simplified-sentence-box">
             <span class="simplified-label">Simplified Plain Language:</span>
             <p id="simplified-text" class="simplified-sentence">
@@ -198,26 +196,26 @@
             </div>
           </div>
 
-          <!-- AAC Symbol Cards Grid -->
+          <!-- AAC Symbol Cards Grid (Balanced 3x2 Grid) -->
           <div id="aac-cards-grid" class="aac-grid">
             <!-- Empty state illustration -->
             <div class="empty-board-state">
               <div class="empty-icon">🧩</div>
               <h3>No Board Generated Yet</h3>
-              <p>CommuniCare will translate your caregiver message into high-contrast picture symbols, formatted by clinical Fitzgerald Key standards.</p>
-              <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Sample Message</button>
+              <p>CommuniCare translates natural caregiver messages into high-contrast picture symbols, structured by clinical Fitzgerald Key standards.</p>
+              <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Morning Routine Sample</button>
             </div>
           </div>
 
           <!-- Fitzgerald Key Legend Bar -->
           <div class="fitzgerald-legend">
             <span class="legend-title">Fitzgerald Key Standard:</span>
-            <span class="legend-pill" style="background:#FEF9C3; border-color:#CA8A04; color:#854D0E;">Yellow: People</span>
-            <span class="legend-pill" style="background:#DCFCE7; border-color:#16A34A; color:#166534;">Green: Verbs</span>
-            <span class="legend-pill" style="background:#FFEDD5; border-color:#EA580C; color:#9A3412;">Orange: Nouns</span>
-            <span class="legend-pill" style="background:#DBEAFE; border-color:#2563EB; color:#1E40AF;">Blue: Adjectives</span>
-            <span class="legend-pill" style="background:#FCE7F3; border-color:#DB2777; color:#9D174D;">Pink: Feelings</span>
-            <span class="legend-pill" style="background:#EDE9FE; border-color:#7C3AED; color:#5B21B6;">Purple: Time</span>
+            <span class="legend-pill" style="background:#FEFCE8; border-color:#EAB308; color:#854D0E;">Yellow: People</span>
+            <span class="legend-pill" style="background:#ECFDF5; border-color:#10B981; color:#065F46;">Green: Verbs</span>
+            <span class="legend-pill" style="background:#FFF7ED; border-color:#F97316; color:#9A3412;">Orange: Nouns</span>
+            <span class="legend-pill" style="background:#EFF6FF; border-color:#3B82F6; color:#1E40AF;">Blue: Adjectives</span>
+            <span class="legend-pill" style="background:#FDF2F8; border-color:#EC4899; color:#9D174D;">Pink: Feelings</span>
+            <span class="legend-pill" style="background:#F5F3FF; border-color:#8B5CF6; color:#5B21B6;">Purple: Time</span>
           </div>
         </div>
       </section>
@@ -254,7 +252,7 @@
     <!-- Presentation Fullscreen Banner -->
     <div id="presentation-banner" class="presentation-header hidden">
       <span id="presentation-recipient">Showing to: Leo</span>
-      <button id="btn-exit-presentation" class="btn btn-accent btn-sm">Exit Fullscreen (Esc)</button>
+      <button id="btn-exit-presentation" class="btn btn-secondary btn-sm">Exit Presentation (Esc)</button>
     </div>
 
   </div>
