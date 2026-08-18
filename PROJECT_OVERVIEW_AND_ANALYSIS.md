@@ -20,7 +20,7 @@ The platform operates on a pipeline architecture:
              ↓
 [ Step 1: Memory and Profile Lookup (Firestore) ]
              ↓
-[ Step 2: Language Simplification and Concept Extraction (Gemini 2.5 Flash) ]
+[ Step 2: Language Simplification and Concept Extraction (Gemini 3.5 Flash) ]
              ↓
 [ Step 3: Symbol Resolution and Disambiguation (Live ARASAAC API and Curated Vectors) ]
              ↓
@@ -38,7 +38,7 @@ The platform operates on a pipeline architecture:
 
 #### Step 2: Language Simplification and Reasoning
 * **Service**: `communicare/services/gemini_service.py`
-* **Model**: Google Gemini 2.5 Flash (with resilient rule based NLP fallback for offline and local testing).
+* **Model**: Google Gemini 3.5 Flash (with resilient rule based NLP fallback for offline and local testing).
 * **Function**: Ingests unstructured caregiver speech, extracts core conversational intent, strips grammatical filler, and outputs structured JSON containing essential communication concepts mapped to parts of speech.
 
 #### Step 3: Dynamic Symbol Resolution and Disambiguation
@@ -117,7 +117,7 @@ CommuniCare/
 │   ├── agent/
 │   │   └── pipeline.py                # 5 step autonomous orchestrator
 │   ├── services/
-│   │   ├── gemini_service.py          # Gemini 2.5 Flash structured reasoning service
+│   │   ├── gemini_service.py          # Gemini 3.5 Flash structured reasoning service
 │   │   ├── firestore_service.py       # Multi tenant Firestore and local JSON state engine
 │   │   └── symbol_library.py          # Live ARASAAC REST API resolver and vector SVG catalog
 │   └── static/
@@ -175,7 +175,7 @@ For your AI to analyze and prioritize, here are high value roadmap directions:
 1. **Progressive Web App (PWA) and Offline Service Worker**:
    * Pre cache vector SVGs and top 1,000 ARASAAC pictograms into IndexedDB so the studio operates smoothly offline in clinical or school environments with no internet.
 2. **Camera and Multimodal Vision Input**:
-   * Allow caregivers to snap a photo of a physical scene (*e.g., breakfast table, classroom activity, therapy room*) and have Gemini 2.5 Flash Vision automatically extract relevant AAC symbols.
+   * Allow caregivers to snap a photo of a physical scene (*e.g., breakfast table, classroom activity, therapy room*) and have Gemini 3.5 Flash Vision automatically extract relevant AAC symbols.
 3. **Switch Access and Eye Tracking Compatibility**:
    * Integrate row column scanning and assistive switch key bindings (*Spacebar, Enter, external Bluetooth switches*) for individuals with motor impairments.
 4. **Multilingual Translation**:

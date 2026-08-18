@@ -38,7 +38,7 @@ class GeminiService:
 
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        self.model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        self.model_name = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
         self.client = None
         self._init_client()
 
@@ -145,7 +145,7 @@ Respond ONLY with valid JSON matching this schema:
         return SimplificationResult(
             simplified_message=data.get("simplified_message", raw_message),
             core_intent=data.get("core_intent", "Communication Support"),
-            gemini_reasoning=data.get("gemini_reasoning", "Gemini 2.5 Flash simplified plain language concepts."),
+            gemini_reasoning=data.get("gemini_reasoning", "Gemini 3.5 Flash simplified plain language concepts."),
             concepts=concepts[:profile.max_board_cards]
         )
 

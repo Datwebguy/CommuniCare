@@ -40,7 +40,7 @@ class CommuniCareAgent:
         """
         Executes the autonomous 5 step agent pipeline:
         1. Context and Profile Retrieval (Firestore)
-        2. Natural Language Simplification and Concept Extraction (Gemini 2.5 Flash)
+        2. Natural Language Simplification and Concept Extraction (Gemini 3.5 Flash)
         3. Symbol Resolution and Preference Alignment (ARASAAC / AAC Library)
         4. High Contrast Board Assembly and Fitzgerald Key Categorization
         5. Memory Update and Interaction Logging (Firestore)

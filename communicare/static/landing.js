@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         icon: '⚡',
         bg: '#F5F3FF',
         color: '#7C3AED',
-        name: 'Gemini 2.5 Flash Reasoning',
+        name: 'Gemini 3.5 Flash Reasoning',
         body: 'Deconstructs unstructured caregiver speech into core AAC communication concepts, identifying primary intent and step-by-step actions.',
         linkText: 'Test Plain Language'
       },
