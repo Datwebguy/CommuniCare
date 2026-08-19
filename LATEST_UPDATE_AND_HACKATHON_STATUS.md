@@ -66,15 +66,12 @@
 
 ---
 
-## 🔑 Note on Gemini API Key Activation
+## 🔑 Gemini API Key & Cloud Run Deployment Security
 
-> **Important Deployment Note**:
-> The live `GEMINI_API_KEY` credential will be supplied in the local `.env` file and Google Cloud Run environment variables prior to final demo video recording and Cloud Run deployment submission.
-> 
-> Currently, the application is configured with auto-loading (`python-dotenv`) in `communicare/main.py` and `gemini_service.py`. When the key is injected:
-> 1. `gemini_service.py` automatically initializes `genai.Client(api_key=...)`.
-> 2. `http://localhost:8080/api/health` will immediately report `"gemini_active": true`.
-> 3. All incoming caregiver messages will route directly through **Google Gemini 3.5 Flash**.
+> **Critical Security & Deployment Requirement**:
+> 1. **Never Commit Secrets**: The `.env` file containing the `GEMINI_API_KEY` is strictly git-ignored and must never be pushed to version control.
+> 2. **Cloud Run Ingestion**: The key must be set at deploy time on Google Cloud Run via Google Cloud Secret Manager (`--set-secrets GEMINI_API_KEY=gemini-api-key:latest`) or direct environment variables (`--set-env-vars GEMINI_API_KEY=...`), ensuring the deployed production endpoint communicates with Gemini 3.5 Flash rather than defaulting to the local fallback.
+> 3. **Local Testing**: When adding `GEMINI_API_KEY` to the local `.env` file for recording, `communicare/services/gemini_service.py` automatically initializes `genai.Client` and `http://localhost:8080/api/health` will confirm `"gemini_active": true`.
 
 ---
 

@@ -132,24 +132,54 @@ To evaluate the autonomous personalization:
 
 ---
 
-## 🚢 Google Cloud Run Production Deployment
+## 🚢 Google Cloud Run Production Deployment & Security
 
-CommuniCare includes a production-ready `Dockerfile` and `cloudbuild.yaml` for deployment to Google Cloud Run:
+> **Security Rule**: The `.env` file holding the `GEMINI_API_KEY` is explicitly git-ignored and must **never** be committed to the repository. The key must be injected at deploy time via Google Cloud Secret Manager or Cloud Run environment variables so that the deployed service actively routes through Gemini 3.5 Flash rather than dropping into the local fallback.
 
+### Option A: Deploy with Google Cloud Secret Manager (Recommended)
 ```bash
-# Set your Google Cloud Project
-gcloud config set project YOUR_PROJECT_ID
+# 1. Create the secret in GCP Secret Manager
+echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create gemini-api-key --data-file=-
 
-# Build and deploy using Google Cloud Build
-gcloud builds submit --config cloudbuild.yaml .
+# 2. Grant Secret Accessor role to the Cloud Run service account
+gcloud secrets add-iam-policy-binding gemini-api-key \
+  --member="serviceAccount:$(gcloud projects describe YOUR_PROJECT_ID --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
 
-# Or deploy directly with gcloud run
+# 3. Deploy to Cloud Run mounting the secret
 gcloud run deploy communicare \
   --source . \
   --region us-central1 \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars GEMINI_API_KEY=YOUR_KEY,GEMINI_MODEL=gemini-3.5-flash,GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
+  --set-env-vars GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GEMINI_MODEL=gemini-3.5-flash \
+  --set-secrets GEMINI_API_KEY=gemini-api-key:latest
+```
+
+### Option B: Deploy with Direct Environment Variables
+```bash
+gcloud run deploy communicare \
+  --source . \
+  --region us-central1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --set-env-vars GEMINI_API_KEY="YOUR_GEMINI_API_KEY",GEMINI_MODEL="gemini-3.5-flash",GOOGLE_CLOUD_PROJECT="YOUR_PROJECT_ID"
+```
+
+### Verifying Live Gemini Activation on Cloud Run:
+After deployment, verify that the service is actively communicating with Gemini 3.5 Flash:
+```bash
+curl https://YOUR_SERVICE_URL.run.app/api/health
+```
+Expected response:
+```json
+{
+  "status": "healthy",
+  "service": "CommuniCare Agent Platform",
+  "gemini_active": true,
+  "gemini_model": "gemini-3.5-flash",
+  "system_status": "Operational"
+}
 ```
 
 ---
