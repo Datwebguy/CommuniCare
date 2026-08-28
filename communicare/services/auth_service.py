@@ -121,9 +121,9 @@ class AuthService:
                     message="Please enter your 6-digit Google Authenticator code."
                 )
 
-            # Verify TOTP code
+            # Verify TOTP code with 1-step window drift tolerance
             totp = pyotp.TOTP(user.totp_secret)
-            if not totp.verify(totp_code.strip()):
+            if not totp.verify(totp_code.strip(), valid_window=1):
                 return AuthResponse(
                     status="error",
                     totp_required=True,
@@ -174,7 +174,7 @@ class AuthService:
             return False, "2FA setup has not been initiated."
 
         totp = pyotp.TOTP(user.totp_secret)
-        if not totp.verify(totp_code.strip()):
+        if not totp.verify(totp_code.strip(), valid_window=1):
             return False, "Invalid 6-digit code. Please verify against your Google Authenticator app."
 
         user.totp_enabled = True
