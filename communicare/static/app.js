@@ -221,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser || !currentUser.token || urlParams.get('action') === 'login') {
       switchAuthTab('login');
       authModal.classList.remove('hidden');
+      setTimeout(renderGoogleSignInButton, 150);
     }
   }
 

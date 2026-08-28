@@ -434,6 +434,38 @@ html, body {
   padding: 0 10px;
 }
 
+/* Auth Modal Specific Layout */
+#auth-modal .modal-container {
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(41, 40, 39, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+#auth-modal .modal-header {
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid var(--color-soft-mist);
+}
+
+#auth-modal .modal-body {
+  padding: 1.25rem 1.4rem;
+  gap: 0.85rem;
+}
+
+#auth-modal .auth-tabs {
+  margin-bottom: 0.85rem;
+}
+
+#auth-modal .form-group {
+  margin-bottom: 0.65rem;
+}
+
+#auth-modal .form-select {
+  padding: 0.55rem 0.8rem;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
 /* Buttons */
 .btn {
   display: inline-flex;
