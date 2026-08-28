@@ -1,6 +1,6 @@
 /**
  * CommuniCare Interactive AAC Studio Controller
- * Multi tenant caregiver isolation, customizable voice engine, and reliable speech sequencing.
+ * Multi tenant caregiver isolation, customizable voice engine, sleek in-app toasts, and reliable speech sequencing.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -79,6 +79,46 @@ document.addEventListener('DOMContentLoaded', () => {
     mode: 'full_sentence_and_cards'
   };
 
+  // Toast Container
+  let toastContainer = document.querySelector('.toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+  }
+
+  /* =========================================================================
+     IN-APP TOAST NOTIFICATION SYSTEM (No Native Browser Alerts)
+     ========================================================================= */
+  function showToast(title, message, type = 'info', duration = 4000) {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+
+    const ICONS = {
+      info: '✨',
+      success: '✓',
+      warning: '⚠️',
+      error: '✕'
+    };
+
+    toast.innerHTML = `
+      <div class="toast-icon">${ICONS[type] || '✨'}</div>
+      <div class="toast-content">
+        <div class="toast-title">${title}</div>
+        <div class="toast-message">${message}</div>
+      </div>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-hide');
+      setTimeout(() => {
+        if (toast.parentElement) toast.parentElement.removeChild(toast);
+      }, 300);
+    }, duration);
+  }
+
   // Active Caregiver ID helper
   function getActiveCaregiverId() {
     return caregiverSelect ? caregiverSelect.value : 'caregiver_primary';
@@ -120,7 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
-    // Load saved preferences if any
     try {
       const saved = localStorage.getItem('communicare_voice_config');
       if (saved) {
@@ -162,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
       voiceConfig.pitch = preset.pitch;
       voiceConfig.rate = preset.rate;
       
-      // Select appropriate matching system voice if available
       if (preset.genderHint.length > 0 && systemVoices.length > 0) {
         const match = systemVoices.find(v => 
           preset.genderHint.some(h => v.name.toLowerCase().includes(h) || v.voiceURI.toLowerCase().includes(h))
@@ -181,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const found = systemVoices.find(v => v.voiceURI === voiceConfig.voiceURI);
       if (found) return found;
     }
-    // Fallback to first english voice or default
     const englishVoice = systemVoices.find(v => v.lang.startsWith('en'));
     return englishVoice || null;
   }
@@ -207,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.speechSynthesis.resume();
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    window._currentUtterance = utterance; // Prevent garbage collection mid-speech
+    window._currentUtterance = utterance;
 
     const voice = getSelectedSpeechVoice();
     if (voice) utterance.voice = voice;
@@ -235,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
         finish();
       };
 
-      // Dynamic safety timeout proportional to sentence length
       const safetyTimeoutMs = Math.max(3500, (cleanText.length * 160) / Math.max(0.5, voiceConfig.rate));
       setTimeout(finish, safetyTimeoutMs);
 
@@ -247,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentBoard || !currentBoard.cards || currentBoard.cards.length === 0) return;
 
     if (isSpeakingAll) {
-      // Toggle off if currently speaking
       window.speechSynthesis.cancel();
       isSpeakingAll = false;
       btnSpeakAll.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span>Speak All</span>';
@@ -260,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSpeakAll.innerHTML = '<span>⏹️ Stop Voice</span>';
 
     try {
-      // Step 1: Speak simplified sentence first if mode includes it
       if (voiceConfig.mode === 'full_sentence_and_cards' || voiceConfig.mode === 'sentence_only') {
         if (simplifiedBanner && simplifiedText) {
           simplifiedBanner.classList.add('box-speaking');
@@ -276,7 +310,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Step 2: Read through 100% of the cards in the grid sequentially
       const cardElements = document.querySelectorAll('.aac-card');
       for (let i = 0; i < currentBoard.cards.length; i++) {
         if (!isSpeakingAll) break;
@@ -384,7 +417,6 @@ document.addEventListener('DOMContentLoaded', () => {
      EVENT LISTENERS
      ========================================================================= */
   function setupEventListeners() {
-    // Caregiver Account Switcher
     if (caregiverSelect) {
       caregiverSelect.addEventListener('change', () => {
         reloadCaregiverWorkspace();
@@ -393,7 +425,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnGenerate.addEventListener('click', () => handleGenerateBoard());
     
-    // Quick sample button in empty state
     document.addEventListener('click', (e) => {
       if (e.target && e.target.id === 'btn-quick-sample') {
         if (currentPresets.length > 0) {
@@ -408,7 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnFullscreen.addEventListener('click', () => togglePresentationMode(true));
     btnExitPresentation.addEventListener('click', () => togglePresentationMode(false));
     
-    // Trace Collapse Toggle
     pipelineToggleHeader.addEventListener('click', () => {
       isTraceExpanded = !isTraceExpanded;
       if (isTraceExpanded) {
@@ -420,7 +450,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Voice Modal Controls
     btnVoiceSettings.addEventListener('click', () => {
       updateVoiceUIFromConfig();
       voiceModal.classList.remove('hidden');
@@ -473,11 +502,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveVoice.addEventListener('click', () => {
       try {
         localStorage.setItem('communicare_voice_config', JSON.stringify(voiceConfig));
+        showToast('Voice Settings Saved', 'Your speech persona preferences have been applied.', 'success');
       } catch (e) {}
       voiceModal.classList.add('hidden');
     });
 
-    // Memory Modal
     btnMemoryView.addEventListener('click', () => openMemoryModal());
     btnCloseModal.addEventListener('click', () => closeMemoryModal());
     btnCloseModalBottom.addEventListener('click', () => closeMemoryModal());
@@ -485,7 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === memoryModal) closeMemoryModal();
     });
 
-    // Add Profile Modal
     btnAddProfile.addEventListener('click', () => {
       addProfileForm.reset();
       addProfileModal.classList.remove('hidden');
@@ -532,17 +560,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           addProfileModal.classList.add('hidden');
           await loadRecipients(recipientId);
-          alert(`Profile for '${name}' created successfully in Firestore.`);
+          showToast('Profile Created', `Profile for "${name}" created successfully in Firestore.`, 'success');
         }
       } catch (err) {
-        alert(`Failed to save profile: ${err.message}`);
+        showToast('Profile Error', `Failed to save profile: ${err.message}`, 'error');
       }
     });
 
-    // Multi Turn Adaptive Demonstration
     btnDemoTour.addEventListener('click', () => runAdaptiveDemo());
 
-    // Keyboard navigation (Esc to exit fullscreen)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && document.body.classList.contains('presentation-mode')) {
         togglePresentationMode(false);
@@ -560,13 +586,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const cid = getActiveCaregiverId();
 
     if (!rawMessage) {
-      alert('Please enter or select a caregiver message first.');
+      showToast('Message Required', 'Please enter or select a caregiver message first.', 'warning');
       caregiverMessageInput.focus();
       return;
     }
 
     if (!recipientId) {
-      alert('Please select or create a care recipient profile first.');
+      showToast('Recipient Required', 'Please select or create a care recipient profile first.', 'warning');
       return;
     }
 
@@ -608,7 +634,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error('Board generation error:', err);
-      alert(`Could not generate board: ${err.message}`);
+      showToast('Generation Error', `Could not generate board: ${err.message}`, 'error');
       pipelineTimer.textContent = 'Error';
     } finally {
       isGenerating = false;
@@ -718,7 +744,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Click to speak individual cards
     document.querySelectorAll('.aac-card').forEach(cardEl => {
       cardEl.addEventListener('click', () => {
         const word = cardEl.getAttribute('data-word');
@@ -747,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (res.ok) {
-        alert(`Saved to memory: '${word}' reinforced for ${recipientId}.`);
+        showToast('Memory Reinforced', `Reinforced '${word.toUpperCase()}' in ${recipientId}'s memory.`, 'success');
       }
     } catch (e) {
       console.error('Feedback error:', e);
@@ -780,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         memoryModal.classList.remove('hidden');
       }
     } catch (e) {
-      alert(`Could not load memory for ${recipientId}`);
+      showToast('Memory Error', `Could not load memory for ${recipientId}`, 'error');
     }
   }
 
@@ -823,8 +848,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /* =========================================================================
+     SMOOTH AUTOMATED ADAPTIVE DEMO (No Disruptive Browser Alerts)
+     ========================================================================= */
   async function runAdaptiveDemo() {
-    alert("Adaptive Memory Demonstration:\n\nTurn 1: CommuniCare processes a morning routine message.\nFeedback: Caregiver reinforces 'medicine' and 'pancakes'.\nTurn 2: CommuniCare processes an afternoon reminder and automatically applies learned Firestore preferences.");
+    showToast('Adaptive Demo Started', 'Turn 1 of 2: Processing morning routine message for Leo...', 'info', 5000);
 
     if (currentRecipients.some(r => r.recipient_id === 'leo_care')) {
       recipientSelect.value = 'leo_care';
@@ -832,7 +860,9 @@ document.addEventListener('DOMContentLoaded', () => {
     caregiverMessageInput.value = 'Good morning Leo! Please take your medicine with a glass of water, then we will have warm pancakes for breakfast.';
     await handleGenerateBoard();
 
-    await new Promise(r => setTimeout(r, 1800));
+    await new Promise(r => setTimeout(r, 2400));
+    showToast('Reinforcing Memory', "Caregiver feedback: Reinforcing 'MEDICINE' preference in Firestore...", 'success', 4000);
+
     await fetch('/api/feedback', {
       method: 'POST',
       headers: {
@@ -849,8 +879,13 @@ document.addEventListener('DOMContentLoaded', () => {
       })
     });
 
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 2000));
+    showToast('Turn 2: Personalization', 'Processing afternoon reminder with learned preferences applied...', 'info', 5000);
+
     caregiverMessageInput.value = 'Leo, remember to take your afternoon medicine before we go for a walk.';
     await handleGenerateBoard();
+
+    await new Promise(r => setTimeout(r, 1200));
+    showToast('Demo Complete', '✨ Multi-Turn Personalization successfully retrieved from Firestore memory!', 'success', 6000);
   }
 });

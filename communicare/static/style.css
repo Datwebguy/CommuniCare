@@ -1044,6 +1044,104 @@ html, body {
   box-shadow: 0 0 0 3px rgba(113, 76, 182, 0.2) !important;
 }
 
+/* Toast Notification System */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 420px;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-soft-mist);
+  border-left: 4px solid var(--color-midnight-wine);
+  box-shadow: 0 8px 24px rgba(41, 40, 39, 0.12);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: var(--color-ink-charcoal);
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.25s ease;
+}
+
+.toast-info {
+  border-left-color: var(--color-royal-violet);
+}
+
+.toast-success {
+  border-left-color: #10b981;
+}
+
+.toast-warning {
+  border-left-color: #f59e0b;
+}
+
+.toast-error {
+  border-left-color: #ef4444;
+}
+
+.toast-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-content {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.toast-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+  color: var(--color-ink-charcoal);
+}
+
+.toast-message {
+  font-size: 0.8rem;
+  color: var(--color-stone-gray);
+}
+
+.toast-hide {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Demo Step Overlay Indicator */
+.demo-banner-active {
+  animation: demoGlow 2s infinite alternate;
+}
+
+@keyframes demoGlow {
+  0% { box-shadow: 0 0 0 2px rgba(113, 76, 182, 0.2); }
+  100% { box-shadow: 0 0 0 6px rgba(113, 76, 182, 0.5); }
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .aac-grid {
@@ -1054,5 +1152,11 @@ html, body {
   }
   .pipeline-steps-horizontal {
     grid-template-columns: 1fr;
+  }
+  .toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    max-width: none;
   }
 }
