@@ -105,6 +105,9 @@ DEFAULT_PRESETS = [
 ]
 
 
+import tempfile
+import shutil
+
 class FirestoreService:
     """
     Multi tenant state manager handling care recipient memory, vocabulary profiles,
@@ -113,7 +116,14 @@ class FirestoreService:
 
     def __init__(self):
         self.project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-        self.local_storage_dir = Path("./data")
+        
+        # Determine writable storage directory (safe for Vercel, AWS Lambda, local Docker)
+        is_serverless = bool(os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME") or os.getenv("LAMBDA_TASK_ROOT"))
+        if is_serverless:
+            self.local_storage_dir = Path(tempfile.gettempdir()) / "communicare_data"
+        else:
+            self.local_storage_dir = Path("./data")
+
         self.local_storage_file = self.local_storage_dir / "recipient_profiles.json"
         self.presets_file = self.local_storage_dir / "presets.json"
         self.users_file = self.local_storage_dir / "users.json"
@@ -134,17 +144,43 @@ class FirestoreService:
             except Exception as e:
                 logger.warning(f"Could not connect to live Firestore ({e}). Using persistent local fallback.")
 
-        # Local persistence mode
-        self.local_storage_dir.mkdir(parents=True, exist_ok=True)
-        if not self.local_storage_file.exists():
-            with open(self.local_storage_file, "w", encoding="utf-8") as f:
-                json.dump(DEFAULT_PROFILES, f, indent=2)
-        if not self.presets_file.exists():
-            with open(self.presets_file, "w", encoding="utf-8") as f:
-                json.dump(DEFAULT_PRESETS, f, indent=2)
-        if not self.users_file.exists():
-            with open(self.users_file, "w", encoding="utf-8") as f:
-                json.dump({}, f, indent=2)
+        # Local persistence mode with safe temp fallback
+        try:
+            self.local_storage_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.local_storage_dir = Path(tempfile.gettempdir()) / "communicare_data"
+            self.local_storage_dir.mkdir(parents=True, exist_ok=True)
+            self.local_storage_file = self.local_storage_dir / "recipient_profiles.json"
+            self.presets_file = self.local_storage_dir / "presets.json"
+            self.users_file = self.local_storage_dir / "users.json"
+
+        try:
+            repo_data_dir = Path(__file__).parent.parent.parent / "data"
+            if not self.local_storage_file.exists():
+                repo_file = repo_data_dir / "recipient_profiles.json"
+                if repo_file.exists():
+                    shutil.copyfile(repo_file, self.local_storage_file)
+                else:
+                    with open(self.local_storage_file, "w", encoding="utf-8") as f:
+                        json.dump(DEFAULT_PROFILES, f, indent=2)
+
+            if not self.presets_file.exists():
+                repo_file = repo_data_dir / "presets.json"
+                if repo_file.exists():
+                    shutil.copyfile(repo_file, self.presets_file)
+                else:
+                    with open(self.presets_file, "w", encoding="utf-8") as f:
+                        json.dump(DEFAULT_PRESETS, f, indent=2)
+
+            if not self.users_file.exists():
+                repo_file = repo_data_dir / "users.json"
+                if repo_file.exists():
+                    shutil.copyfile(repo_file, self.users_file)
+                else:
+                    with open(self.users_file, "w", encoding="utf-8") as f:
+                        json.dump({}, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Initialized local JSON fallback memory store with warning: {e}")
 
     # =========================================================================
     # USER ACCOUNT MANAGEMENT & STRICT ISOLATION
