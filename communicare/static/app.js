@@ -661,20 +661,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    const btnCustomGoogleLogin = document.getElementById('btn-custom-google-login');
-    if (btnCustomGoogleLogin) {
-      btnCustomGoogleLogin.addEventListener('click', () => {
-        if (window.google && window.google.accounts && window.google.accounts.id) {
-          try {
-            window.google.accounts.id.prompt();
-          } catch (e) {
-            showToast('Google OAuth', 'Please configure your Google Client ID in Google Cloud Console.', 'info');
+    function renderGoogleSignInButton() {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: "934093627046-o3dde5hvlkgl8qtmm1fdrjoiuvabkr8t.apps.googleusercontent.com",
+            callback: window.handleGoogleCredentialResponse
+          });
+          const btnWrapper = document.getElementById('google-btn-wrapper');
+          if (btnWrapper) {
+            btnWrapper.innerHTML = '';
+            window.google.accounts.id.renderButton(btnWrapper, {
+              theme: "outline",
+              size: "large",
+              type: "standard",
+              shape: "rectangular",
+              text: "continue_with",
+              logo_alignment: "left",
+              width: 360
+            });
           }
-        } else {
-          showToast('Google Sign-In', 'Google Identity Services is loading or configuring. You can also sign in with email.', 'info');
+        } catch (e) {
+          console.warn("Could not initialize Google button:", e);
         }
-      });
+      }
     }
+
+    // Call after DOM and scripts ready
+    setTimeout(renderGoogleSignInButton, 500);
 
     // Auth Modal Navigation
     tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
