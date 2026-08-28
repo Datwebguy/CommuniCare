@@ -237,25 +237,39 @@ class AuthService:
 
     def authenticate_google(self, credential: str) -> AuthResponse:
         """
-        Authenticate user with Google OAuth 2.0 Identity Services credential (ID Token JWT).
-        Verifies Google token signature, retrieves profile, and auto-provisions user.
+        Authenticate user with Google OAuth 2.0 Identity Services credential (ID Token JWT or Access Token).
+        Verifies Google token, retrieves profile, and auto-provisions user.
         """
         try:
-            from google.oauth2 import id_token
-            from google.auth.transport import requests as google_requests
-
             client_id = os.getenv("GOOGLE_CLIENT_ID")
-            # Verify the ID token against Google's public certificates
-            id_info = id_token.verify_oauth2_token(
-                credential,
-                google_requests.Request(),
-                audience=client_id if client_id else None
-            )
+            id_info = None
 
-            email = id_info.get("email")
-            if not email:
+            # 1. Try verifying as ID token (JWT)
+            try:
+                from google.oauth2 import id_token
+                from google.auth.transport import requests as google_requests
+                id_info = id_token.verify_oauth2_token(
+                    credential,
+                    google_requests.Request(),
+                    audience=client_id if client_id else None
+                )
+            except Exception as jwt_err:
+                logger.debug(f"JWT verification fallback to userinfo: {jwt_err}")
+                # 2. Try fetching user info with OAuth2 Access Token
+                import urllib.request
+                import json
+                req = urllib.request.Request(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    headers={"Authorization": f"Bearer {credential}"}
+                )
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    if resp.status == 200:
+                        id_info = json.loads(resp.read().decode("utf-8"))
+
+            if not id_info or not id_info.get("email"):
                 return AuthResponse(status="error", message="Could not extract email from Google credential.")
 
+            email = id_info.get("email")
             email_clean = email.strip().lower()
             name = id_info.get("name") or email_clean.split("@")[0].title()
 

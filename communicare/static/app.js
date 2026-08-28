@@ -214,6 +214,17 @@ document.addEventListener('DOMContentLoaded', () => {
       currentUser = null;
     }
 
+    // Check for Google OAuth access_token in URL hash
+    if (window.location.hash) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      if (accessToken) {
+        window.history.replaceState(null, '', window.location.pathname);
+        window.handleGoogleCredentialResponse({ credential: accessToken });
+        return;
+      }
+    }
+
     updateUserUI();
 
     // If not signed in or explicit login request, prompt Auth Modal immediately
@@ -221,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser || !currentUser.token || urlParams.get('action') === 'login') {
       switchAuthTab('login');
       authModal.classList.remove('hidden');
-      setTimeout(renderGoogleSignInButton, 150);
     }
   }
 
@@ -620,7 +630,6 @@ document.addEventListener('DOMContentLoaded', () => {
       btnHeaderSignin.addEventListener('click', () => {
         switchAuthTab('login');
         authModal.classList.remove('hidden');
-        renderGoogleSignInButton();
       });
     }
 
@@ -637,15 +646,18 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         switchAuthTab('login');
         authModal.classList.remove('hidden');
-        renderGoogleSignInButton();
       }
     });
+
+    const GOOGLE_CLIENT_ID = "934093627046-o3dde5hvlkgl8qtmm1fdrjoiuvabkr8t.apps.googleusercontent.com";
+    let googleTokenClient = null;
 
     // Google OAuth 2.0 Sign In Handlers
     window.handleGoogleCredentialResponse = async function(googleResponse) {
       if (!googleResponse || !googleResponse.credential) return;
 
       try {
+        setAuthAlert('Connecting with Google...', 'info');
         const res = await fetch('/api/auth/google', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -677,67 +689,53 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    function renderGoogleSignInButton() {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
+    function triggerGoogleLoginFlow() {
+      // 1. Try modern OAuth2 Token Client Popup (instant Google account popup)
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
         try {
-          window.google.accounts.id.initialize({
-            client_id: "934093627046-o3dde5hvlkgl8qtmm1fdrjoiuvabkr8t.apps.googleusercontent.com",
-            callback: window.handleGoogleCredentialResponse,
-            auto_select: false,
-            cancel_on_tap_outside: true
-          });
-          const btnWrapper = document.getElementById('google-btn-wrapper');
-          if (btnWrapper) {
-            btnWrapper.innerHTML = '';
-            window.google.accounts.id.renderButton(btnWrapper, {
-              theme: "outline",
-              size: "large",
-              type: "standard",
-              shape: "rectangular",
-              text: "continue_with",
-              logo_alignment: "left",
-              width: 360
+          if (!googleTokenClient) {
+            googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+              client_id: GOOGLE_CLIENT_ID,
+              scope: "openid profile email",
+              callback: async (tokenResponse) => {
+                if (tokenResponse && tokenResponse.access_token) {
+                  await window.handleGoogleCredentialResponse({ credential: tokenResponse.access_token });
+                } else if (tokenResponse && tokenResponse.error) {
+                  setAuthAlert(`Google login cancelled or error: ${tokenResponse.error}`);
+                }
+              }
             });
           }
+          googleTokenClient.requestAccessToken({ prompt: 'select_account' });
+          return;
         } catch (e) {
-          console.warn("Could not initialize Google button:", e);
+          console.warn("OAuth2 token client error:", e);
         }
       }
+
+      // 2. Try GSI prompt fallback
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+          window.google.accounts.id.prompt();
+          return;
+        } catch (e) {
+          console.warn("GSI prompt fallback error:", e);
+        }
+      }
+
+      // 3. Fallback: Direct OAuth2 redirect
+      const redirectUri = window.location.origin + '/app';
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=openid%20profile%20email&prompt=select_account`;
+      window.location.href = authUrl;
     }
 
     const btnCustomGoogleLogin = document.getElementById('btn-custom-google-login');
     if (btnCustomGoogleLogin) {
-      btnCustomGoogleLogin.addEventListener('click', () => {
-        if (window.google && window.google.accounts && window.google.accounts.id) {
-          try {
-            window.google.accounts.id.prompt((notification) => {
-              if (notification && (notification.isNotDisplayed() || notification.isSkippedMoment())) {
-                const btnWrapper = document.getElementById('google-btn-wrapper');
-                if (btnWrapper) {
-                  btnWrapper.style.display = 'flex';
-                  window.google.accounts.id.renderButton(btnWrapper, {
-                    theme: "outline",
-                    size: "large",
-                    type: "standard",
-                    shape: "rectangular",
-                    text: "continue_with",
-                    logo_alignment: "left",
-                    width: 360
-                  });
-                }
-              }
-            });
-          } catch (e) {
-            showToast('Google OAuth', 'Google Identity Services prompt initiated.', 'info');
-          }
-        } else {
-          showToast('Google Sign-In', 'Google Identity Services is loading. Please try again in a moment.', 'info');
-        }
+      btnCustomGoogleLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerGoogleLoginFlow();
       });
     }
-
-    // Call after DOM and scripts ready
-    setTimeout(renderGoogleSignInButton, 600);
 
     // Auth Modal Navigation
     tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
