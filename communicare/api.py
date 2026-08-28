@@ -18,7 +18,8 @@ from communicare.models import (
     ForgotPasswordRequest,
     ResetPasswordRequest,
     TwoFactorSetupResponse,
-    TwoFactorVerifyRequest
+    TwoFactorVerifyRequest,
+    GoogleAuthRequest
 )
 from communicare.agent.pipeline import agent_orchestrator
 from communicare.services.firestore_service import firestore_service
@@ -88,6 +89,15 @@ def login(request: LoginRequest):
     )
     if response.status == "error":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=response.message)
+    return response
+
+
+@router.post("/auth/google", response_model=AuthResponse)
+def google_login(request: GoogleAuthRequest):
+    """Authenticate or auto-provision user using Google OAuth 2.0 Identity Token."""
+    response = auth_service.authenticate_google(request.credential)
+    if response.status == "error":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=response.message)
     return response
 
 

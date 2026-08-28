@@ -235,6 +235,65 @@ class AuthService:
         logger.info(f"Password reset completed for user: {email_clean}")
         return True, "Password reset successfully. You can now log in with your new password."
 
+    def authenticate_google(self, credential: str) -> AuthResponse:
+        """
+        Authenticate user with Google OAuth 2.0 Identity Services credential (ID Token JWT).
+        Verifies Google token signature, retrieves profile, and auto-provisions user.
+        """
+        try:
+            from google.oauth2 import id_token
+            from google.auth.transport import requests as google_requests
+
+            client_id = os.getenv("GOOGLE_CLIENT_ID")
+            # Verify the ID token against Google's public certificates
+            id_info = id_token.verify_oauth2_token(
+                credential,
+                google_requests.Request(),
+                audience=client_id if client_id else None
+            )
+
+            email = id_info.get("email")
+            if not email:
+                return AuthResponse(status="error", message="Could not extract email from Google credential.")
+
+            email_clean = email.strip().lower()
+            name = id_info.get("name") or email_clean.split("@")[0].title()
+
+            # Check if user already exists
+            user = firestore_service.get_user_by_email(email_clean)
+            if not user:
+                # Provision new user from Google profile
+                safe_prefix = email_clean.split("@")[0]
+                user_id = f"user_google_{safe_prefix}_{secrets.token_hex(4)}"
+                dummy_hash = self.hash_password(secrets.token_urlsafe(32))
+                user = UserAccount(
+                    user_id=user_id,
+                    email=email_clean,
+                    full_name=name,
+                    hashed_password=dummy_hash,
+                    totp_secret=None,
+                    totp_enabled=False
+                )
+                firestore_service.save_user(user)
+                firestore_service.initialize_user_workspace(user.user_id, user.full_name)
+                logger.info(f"Auto-provisioned new Google user: {email_clean} (ID: {user.user_id})")
+
+            token = self.generate_token(user.user_id, user.email)
+            return AuthResponse(
+                status="success",
+                token=token,
+                user_id=user.user_id,
+                email=user.email,
+                full_name=user.full_name,
+                totp_required=False,
+                totp_enabled=user.totp_enabled,
+                message="Google authentication successful."
+            )
+        except Exception as e:
+            logger.error(f"Google OAuth verification failed: {e}")
+            return AuthResponse(status="error", message=f"Google authentication failed: {str(e)}")
+
 
 # Singleton instance
 auth_service = AuthService()
+

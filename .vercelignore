@@ -1,0 +1,19 @@
+.env
+.env.*
+*.env
+.env.local
+*.secret.json
+service_account*.json
+credentials*.json
+*.key
+*.pem
+secrets/
+
+# Python & testing cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/

@@ -177,3 +177,8 @@ class TwoFactorSetupResponse(BaseModel):
 
 class TwoFactorVerifyRequest(BaseModel):
     totp_code: str
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str = Field(..., description="Google OAuth 2.0 ID token JWT from Google Identity Services")
+    client_id: Optional[str] = None

@@ -625,6 +625,57 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Google OAuth 2.0 Sign In Handlers
+    window.handleGoogleCredentialResponse = async function(googleResponse) {
+      if (!googleResponse || !googleResponse.credential) return;
+
+      try {
+        const res = await fetch('/api/auth/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: googleResponse.credential })
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.status === 'error') {
+          setAuthAlert(data.detail || data.message || 'Google authentication failed.');
+          return;
+        }
+
+        currentUser = {
+          user_id: data.user_id,
+          email: data.email,
+          full_name: data.full_name,
+          totp_enabled: data.totp_enabled,
+          token: data.token
+        };
+        localStorage.setItem('communicare_user', JSON.stringify(currentUser));
+        localStorage.setItem('communicare_token', data.token);
+
+        updateUserUI();
+        authModal.classList.add('hidden');
+        await reloadCaregiverWorkspace();
+        showToast('Google Sign-In Successful', `Welcome, ${data.full_name}!`, 'success');
+      } catch (err) {
+        setAuthAlert(`Google sign-in error: ${err.message}`);
+      }
+    };
+
+    const btnCustomGoogleLogin = document.getElementById('btn-custom-google-login');
+    if (btnCustomGoogleLogin) {
+      btnCustomGoogleLogin.addEventListener('click', () => {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          try {
+            window.google.accounts.id.prompt();
+          } catch (e) {
+            showToast('Google OAuth', 'Please configure your Google Client ID in Google Cloud Console.', 'info');
+          }
+        } else {
+          showToast('Google Sign-In', 'Google Identity Services is loading or configuring. You can also sign in with email.', 'info');
+        }
+      });
+    }
+
     // Auth Modal Navigation
     tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
     tabAuthRegister.addEventListener('click', () => switchAuthTab('register'));
