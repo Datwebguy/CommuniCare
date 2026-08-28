@@ -230,4 +230,26 @@ document.addEventListener('DOMContentLoaded', () => {
     utterance.pitch = 1.0;
     window.speechSynthesis.speak(utterance);
   };
+
+  // FAQ Accordion Toggle Interaction
+  const faqButtons = document.querySelectorAll('.faq-question-btn');
+  faqButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const isActive = item.classList.contains('active');
+      
+      // Close all items
+      document.querySelectorAll('.faq-item').forEach(el => {
+        el.classList.remove('active');
+        const qBtn = el.querySelector('.faq-question-btn');
+        if (qBtn) qBtn.setAttribute('aria-expanded', 'false');
+      });
+
+      // Toggle clicked item
+      if (!isActive) {
+        item.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
 });
