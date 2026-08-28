@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CommuniCare | Autonomous AAC Picture Symbol Board Studio</title>
-  <meta name="description" content="CommuniCare autonomously converts everyday caregiver messages into simple plain language and high contrast AAC picture symbol boards for nonverbal individuals.">
+  <title>CommuniCare | Autonomous AAC Picture Symbol Studio</title>
+  <meta name="description" content="CommuniCare translates caregiver messages into high contrast picture symbol boards and natural plain language for nonverbal individuals.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;460;500;600;700&display=swap" rel="stylesheet">
@@ -27,67 +27,83 @@
           </div>
           <div class="brand-titles">
             <span class="brand-name">CommuniCare</span>
-            <span class="brand-tagline">Autonomous AAC Studio</span>
+            <span class="brand-tagline">AAC Studio</span>
           </div>
         </a>
       </div>
 
-      <!-- Multi Tenant Caregiver Account & Recipient Profile Selector -->
-      <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-        
-        <!-- Active Caregiver Selector -->
-        <div class="header-recipient-selector" title="Active Caregiver Account (Data is private and isolated)">
-          <span style="font-size:0.75rem; font-weight:700; color:var(--color-stone-gray);">Caregiver:</span>
-          <select id="caregiver-select" class="header-select">
-            <option value="caregiver_primary">Dr. Sarah Jenkins</option>
-            <option value="caregiver_clinic">Riverdale Therapy Center</option>
-            <option value="caregiver_home">Home Care Workspace</option>
-          </select>
-        </div>
-
-        <!-- Recipient Profile Selector -->
-        <div class="header-recipient-selector">
+      <!-- Recipient Profile Selector -->
+      <div class="header-center-controls">
+        <div class="header-recipient-selector" title="Active Care Recipient Profile">
           <label for="recipient-select" class="header-recipient-label">Recipient:</label>
           <select id="recipient-select" class="header-select">
             <option value="">Loading profiles...</option>
           </select>
           <button id="btn-add-profile" class="btn-icon-sm" title="Add New Recipient Profile">+</button>
         </div>
-
       </div>
 
+      <!-- User Account & Quick Actions -->
       <div class="header-actions">
-        <button id="btn-memory-view" class="btn btn-secondary btn-sm" title="View Firestore Memory">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Recipient Memory
+        <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run Multi Turn Adaptive Demo">
+          ✨ Adaptive Demo
         </button>
-        <button id="btn-demo-tour" class="btn btn-accent btn-sm" title="Run Multi Turn Adaptive Demonstration">
-          ✨ Adaptive Memory Demo
-        </button>
+
+        <!-- User Profile Dropdown -->
+        <div class="user-profile-menu-container">
+          <button id="btn-user-menu" class="btn-user-pill" title="User Account & Security">
+            <div class="user-avatar-circle" id="user-avatar-initials">SJ</div>
+            <span id="user-display-name" class="user-display-name">Dr. Sarah</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div id="user-dropdown-menu" class="user-dropdown-card hidden">
+            <div class="user-dropdown-header">
+              <strong id="dropdown-user-name">Dr. Sarah Jenkins</strong>
+              <span id="dropdown-user-email" class="dropdown-email">sarah@clinic.local</span>
+            </div>
+            <div class="user-dropdown-divider"></div>
+            <button id="dropdown-btn-2fa" class="dropdown-item">
+              <span>🔐 Google Authenticator (2FA)</span>
+              <span id="dropdown-2fa-badge" class="badge-subtle">Off</span>
+            </button>
+            <button id="dropdown-btn-memory" class="dropdown-item">
+              <span>🧠 Recipient Memory</span>
+            </button>
+            <button id="dropdown-btn-add-recipient" class="dropdown-item">
+              <span>➕ Add Recipient Profile</span>
+            </button>
+            <div class="user-dropdown-divider"></div>
+            <button id="dropdown-btn-auth" class="dropdown-item item-accent">
+              <span id="dropdown-auth-label">🔑 Switch / Sign In Account</span>
+            </button>
+          </div>
+        </div>
       </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Studio Canvas -->
     <main class="main-content">
 
-      <!-- Section 1: Caregiver Input Studio (Top Unified Card) -->
+      <!-- Composer Card: Quick Presets + Message Input -->
       <section class="studio-card">
-        <!-- Quick Scenario Chips -->
+        <!-- Scenario Presets -->
         <div class="presets-row">
-          <span class="presets-label">Scenario Presets:</span>
+          <span class="presets-label">Quick Presets:</span>
           <div id="presets-container" class="presets-chips">
             <!-- Dynamically populated from /api/presets -->
           </div>
         </div>
 
-        <!-- Input Area & Generate Controls -->
+        <!-- Composer Textarea & Action Bar -->
         <div class="input-composer-row">
           <div class="textarea-wrapper">
             <textarea
               id="caregiver-message"
               class="form-textarea"
               rows="2"
-              placeholder="Enter caregiver message or speech note (e.g., 'Good morning Leo! Please take your medicine with water, then eat pancakes for breakfast and we will take a walk to the park to see the dogs.')"
+              placeholder="Type a caregiver message or care note (e.g., 'Good morning Leo! Please take your medicine with water, then eat pancakes for breakfast and we will go to the park.')"
             ></textarea>
           </div>
 
@@ -95,21 +111,21 @@
             <div class="style-selector-group">
               <label for="style-select" class="form-label-inline">Style:</label>
               <select id="style-select" class="form-select-sm">
-                <option value="core_words">Core AAC Words</option>
+                <option value="core_words">Core Words</option>
                 <option value="step_by_step">Sequential Steps</option>
               </select>
             </div>
             <button id="btn-generate" class="btn btn-primary btn-generate">
-              <span>⚡ Generate AAC Board</span>
+              <span>⚡ Generate Board</span>
             </button>
           </div>
         </div>
       </section>
 
-      <!-- Section 2: Main AAC Communication Board (Hero Canvas) -->
+      <!-- Communication Board Hero Canvas -->
       <section class="board-card">
         
-        <!-- Board Top Header -->
+        <!-- Board Top Bar -->
         <div class="board-topbar">
           <div class="board-meta">
             <div class="board-title-row">
@@ -119,31 +135,31 @@
           </div>
 
           <div class="board-toolbar-actions">
-            <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence and message aloud">
+            <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence aloud">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
               <span>Speak All</span>
             </button>
-            <button id="btn-voice-settings" class="btn btn-secondary btn-sm" title="Configure voice gender, tone, pitch, and speed">
+            <button id="btn-voice-settings" class="btn btn-secondary btn-sm" title="Configure voice persona, pitch, and speed">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-              <span>Voice Settings</span>
+              <span>Voice Tone</span>
             </button>
             <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical AAC communication sheet">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-              Print Sheet
+              <span>Print Sheet</span>
             </button>
             <button id="btn-fullscreen" class="btn btn-secondary btn-sm" title="Fullscreen Presentation View for Recipient">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-              Presentation View
+              <span>Presentation</span>
             </button>
           </div>
         </div>
 
-        <!-- Plain Language Story Ribbon -->
-        <div id="simplified-banner" class="simplified-sentence-box">
+        <!-- Plain Language Sentence Ribbon -->
+        <div id="simplified-banner" class="simplified-sentence-box" title="Click to speak plain sentence aloud">
           <div class="simplified-ribbon-content">
-            <span class="simplified-label">Simplified Plain Language:</span>
+            <span class="simplified-label">Plain Language:</span>
             <p id="simplified-text" class="simplified-sentence">
-              Select a scenario preset above or type your message to autonomously generate an accessible picture symbol board.
+              Select a preset above or enter your caregiver message to autonomously create an AAC picture board.
             </p>
           </div>
           <div id="adaptation-alert" class="adaptation-tag hidden">
@@ -161,21 +177,21 @@
           </div>
         </div>
 
-        <!-- Fitzgerald Key Legend Bar -->
+        <!-- Fitzgerald Key Color Legend -->
         <div class="fitzgerald-legend">
           <span class="legend-title">Fitzgerald Key Standard:</span>
           <div class="legend-pills-row">
             <span class="legend-pill" style="background:#FEFCE8; border-color:#EAB308; color:#854D0E;">Yellow: People</span>
             <span class="legend-pill" style="background:#ECFDF5; border-color:#10B981; color:#065F46;">Green: Verbs</span>
             <span class="legend-pill" style="background:#FFF7ED; border-color:#F97316; color:#9A3412;">Orange: Nouns</span>
-            <span class="legend-pill" style="background:#EFF6FF; border-color:#3B82F6; color:#1E40AF;">Blue: Adjectives</span>
+            <span class="legend-pill" style="background:#EFF6FF; border-color:#3B82F6; color:#1E40AF;">Blue: Descriptors</span>
             <span class="legend-pill" style="background:#FDF2F8; border-color:#EC4899; color:#9D174D;">Pink: Feelings</span>
             <span class="legend-pill" style="background:#F5F3FF; border-color:#8B5CF6; color:#5B21B6;">Purple: Time</span>
           </div>
         </div>
       </section>
 
-      <!-- Section 3: Autonomous Agent Pipeline Trace (Collapsible Insights Card) -->
+      <!-- Autonomous Agent Pipeline Trace (Collapsible) -->
       <section class="pipeline-section">
         <div class="pipeline-card">
           <div class="pipeline-header" id="pipeline-toggle-header">
@@ -190,7 +206,7 @@
             </button>
           </div>
 
-          <div id="pipeline-steps" class="pipeline-steps-horizontal">
+          <div id="pipeline-steps" class="pipeline-steps-horizontal hidden">
             <div class="pipeline-step step-idle">
               <div class="step-icon">1</div>
               <div class="step-info">
@@ -228,23 +244,166 @@
             </div>
           </div>
         </div>
+      </section>
+
       <!-- App Footer with Attribution -->
-      <footer class="studio-footer" style="text-align:center; padding:1.25rem 1rem 2rem; font-size:0.75rem; color:var(--color-stone-gray); border-top:1px solid var(--color-soft-mist); margin-top:2rem;">
+      <footer class="studio-footer">
         <p>CommuniCare &bull; Autonomous Assistive Intelligence Platform &bull; Built with Google GenAI SDK &bull; Gemini 3.5 Flash &bull; Google Cloud Run</p>
-        <p style="margin-top:0.35rem;">Pictograms by ARASAAC (<a href="https://arasaac.org" target="_blank" rel="noopener" style="color:var(--color-royal-violet); text-decoration:underline;">arasaac.org</a>) licensed under CC BY-NC-SA 3.0.</p>
+        <p style="margin-top:0.35rem;">Pictograms by ARASAAC (<a href="https://arasaac.org" target="_blank" rel="noopener">arasaac.org</a>) licensed under CC BY-NC-SA 3.0.</p>
       </footer>
     </main>
 
+    <!-- =========================================================================
+         MODAL: AUTHENTICATION (Sign In / Sign Up / Forgot Password / 2FA)
+         ========================================================================= -->
+    <div id="auth-modal" class="modal-backdrop hidden">
+      <div class="modal-container" style="max-width: 440px;">
+        <div class="modal-header">
+          <h2 id="auth-modal-title" class="modal-title">Sign In to CommuniCare</h2>
+          <button id="btn-close-auth-modal" class="btn-close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Auth Navigation Tabs -->
+          <div class="auth-tabs" id="auth-tabs-row">
+            <button id="tab-auth-login" class="auth-tab active" type="button">Sign In</button>
+            <button id="tab-auth-register" class="auth-tab" type="button">Create Account</button>
+            <button id="tab-auth-forgot" class="auth-tab" type="button">Forgot Password</button>
+          </div>
+
+          <!-- Alert message box -->
+          <div id="auth-alert" class="auth-alert-box hidden"></div>
+
+          <!-- Form 1: Sign In -->
+          <form id="form-auth-login" class="auth-form">
+            <div class="form-group">
+              <label for="login-email" class="form-label">Email Address:</label>
+              <input type="email" id="login-email" class="form-select" placeholder="name@clinic.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="login-password" class="form-label">Password:</label>
+              <input type="password" id="login-password" class="form-select" placeholder="••••••••" required autocomplete="current-password" />
+            </div>
+
+            <!-- Optional 2FA Code field (shown if 2FA required) -->
+            <div id="login-2fa-field" class="form-group hidden">
+              <label for="login-totp" class="form-label" style="color:var(--color-royal-violet); font-weight:700;">
+                🔐 Google Authenticator 6-Digit Code:
+              </label>
+              <input type="text" id="login-totp" class="form-select" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+              <span style="font-size:0.75rem; color:var(--color-stone-gray);">Open Google Authenticator app on your phone and enter the 6-digit code.</span>
+            </div>
+
+            <button type="submit" id="btn-submit-login" class="btn btn-primary btn-block" style="margin-top:1rem;">
+              <span>Sign In</span>
+            </button>
+          </form>
+
+          <!-- Form 2: Sign Up (Register) -->
+          <form id="form-auth-register" class="auth-form hidden">
+            <div class="form-group">
+              <label for="reg-fullname" class="form-label">Full Name:</label>
+              <input type="text" id="reg-fullname" class="form-select" placeholder="Dr. Sarah Jenkins" required />
+            </div>
+            <div class="form-group">
+              <label for="reg-email" class="form-label">Email Address:</label>
+              <input type="email" id="reg-email" class="form-select" placeholder="sarah@clinic.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="reg-password" class="form-label">Password (min 6 chars):</label>
+              <input type="password" id="reg-password" class="form-select" placeholder="••••••••" minlength="6" required autocomplete="new-password" />
+            </div>
+            <button type="submit" id="btn-submit-register" class="btn btn-primary btn-block" style="margin-top:1rem;">
+              <span>Create Account</span>
+            </button>
+          </form>
+
+          <!-- Form 3: Forgot Password -->
+          <form id="form-auth-forgot" class="auth-form hidden">
+            <div class="form-group">
+              <label for="forgot-email" class="form-label">Account Email Address:</label>
+              <input type="email" id="forgot-email" class="form-select" placeholder="sarah@clinic.com" required />
+            </div>
+
+            <!-- Step 2: Reset Token & New Password -->
+            <div id="reset-token-group" class="hidden">
+              <div class="form-group">
+                <label for="reset-token" class="form-label">Reset Token:</label>
+                <input type="text" id="reset-token" class="form-select" placeholder="Paste reset token here" />
+              </div>
+              <div class="form-group">
+                <label for="reset-new-password" class="form-label">New Password:</label>
+                <input type="password" id="reset-new-password" class="form-select" placeholder="••••••••" minlength="6" />
+              </div>
+            </div>
+
+            <button type="submit" id="btn-submit-forgot" class="btn btn-primary btn-block" style="margin-top:1rem;">
+              <span>Request Reset Token</span>
+            </button>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL: GOOGLE AUTHENTICATOR (2FA / MFA SECURITY)
+         ========================================================================= -->
+    <div id="twofactor-modal" class="modal-backdrop hidden">
+      <div class="modal-container" style="max-width: 480px;">
+        <div class="modal-header">
+          <h2 class="modal-title">🔐 Google Authenticator (2FA)</h2>
+          <button id="btn-close-2fa-modal" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="twofactor-status-box" style="margin-bottom:1.25rem; padding:0.85rem; border-radius:8px; background:var(--color-paper-white); border:1px solid var(--color-soft-mist); font-size:0.85rem;">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <div id="twofactor-setup-view" class="hidden">
+            <div style="font-size:0.85rem; color:var(--color-stone-gray); line-height:1.5; margin-bottom:1rem;">
+              <strong>Step 1:</strong> Open <strong>Google Authenticator</strong> or <strong>Microsoft Authenticator</strong> on your phone.<br/>
+              <strong>Step 2:</strong> Tap <strong>+</strong> and select <em>"Enter a setup key"</em>.<br/>
+              <strong>Step 3:</strong> Enter key:
+              <div id="twofactor-secret-key" style="margin:8px 0; padding:8px 12px; background:var(--color-soft-mist); border-radius:6px; font-family:monospace; font-weight:700; font-size:1rem; letter-spacing:1px; color:var(--color-ink-charcoal); user-select:all; cursor:pointer;" title="Click to copy">
+                --------
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="twofactor-verify-code" class="form-label">
+                <strong>Step 4:</strong> Enter the 6-digit code shown in your app to activate:
+              </label>
+              <input type="text" id="twofactor-verify-code" class="form-select" placeholder="123456" maxlength="6" inputmode="numeric" style="font-size:1.2rem; letter-spacing:4px; text-align:center;" />
+            </div>
+
+            <button id="btn-enable-2fa-confirm" class="btn btn-primary btn-block">
+              Activate Google Authenticator
+            </button>
+          </div>
+
+          <div id="twofactor-active-view" class="hidden">
+            <div style="background:#ECFDF5; border:1px solid #10B981; border-radius:8px; padding:12px; color:#065F46; font-size:0.85rem; margin-bottom:1rem;">
+              ✓ <strong>Two-Factor Authentication is Active.</strong> Your account is protected with Google Authenticator.
+            </div>
+            <button id="btn-disable-2fa" class="btn btn-secondary btn-block" style="color:#DC2626; border-color:#FCA5A5;">
+              Deactivate Google Authenticator
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: Voice & Audio Customization -->
     <div id="voice-modal" class="modal-backdrop hidden">
-      <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-container" style="max-width: 480px;">
         <div class="modal-header">
-          <h2 class="modal-title">Voice & Audio Settings</h2>
+          <h2 class="modal-title">Voice & Tone Settings</h2>
           <button id="btn-close-voice-modal" class="btn-close">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label for="voice-persona-select" class="form-label">Voice Persona & Tone:</label>
+            <label for="voice-persona-select" class="form-label">Voice Tone Persona:</label>
             <select id="voice-persona-select" class="form-select">
               <option value="child_friendly">🧒 Child Friendly (Warm, High Tone)</option>
               <option value="female_adult" selected>👩 Female Adult (Natural, Gentle)</option>
@@ -256,7 +415,7 @@
           </div>
 
           <div class="form-group">
-            <label for="system-voice-select" class="form-label">Browser TTS Voice:</label>
+            <label for="system-voice-select" class="form-label">Browser Speech Voice:</label>
             <select id="system-voice-select" class="form-select">
               <option value="">Default System Voice</option>
             </select>
@@ -279,9 +438,9 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Speak All Mode:</label>
+            <label class="form-label">Reading Mode:</label>
             <select id="voice-mode-select" class="form-select">
-              <option value="full_sentence_and_cards" selected>Speak Plain Sentence + Read Each Card</option>
+              <option value="full_sentence_and_cards" selected>Speak Plain Sentence + Read Cards</option>
               <option value="cards_only">Read Cards in Sequence Only</option>
               <option value="sentence_only">Speak Plain Sentence Only</option>
             </select>
@@ -299,22 +458,22 @@
       </div>
     </div>
 
-    <!-- Modal: Recipient Memory & Firestore Inspector -->
+    <!-- Modal: Recipient Memory Inspector -->
     <div id="memory-modal" class="modal-backdrop hidden">
       <div class="modal-container">
         <div class="modal-header">
-          <h2 class="modal-title">Recipient Memory and Profile (Firestore State)</h2>
+          <h2 class="modal-title">Recipient Memory & Preferences (Firestore)</h2>
           <button id="btn-close-modal" class="btn-close">&times;</button>
         </div>
         <div class="modal-body">
           <div id="memory-profile-summary" class="memory-summary-box"></div>
           <div class="memory-tabs">
             <div class="memory-section">
-              <h3>Learned Vocabulary and Success Reinforcements</h3>
+              <h3>Learned Vocabulary & Success Counts</h3>
               <div id="learned-vocab-cloud" class="vocab-cloud"></div>
             </div>
             <div class="memory-section">
-              <h3>Custom Symbol Preferences</h3>
+              <h3>Custom Symbol Mappings</h3>
               <div id="symbol-pref-list" class="pref-list"></div>
             </div>
           </div>
@@ -327,7 +486,7 @@
 
     <!-- Modal: Add New Recipient Profile -->
     <div id="add-profile-modal" class="modal-backdrop hidden">
-      <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-container" style="max-width: 480px;">
         <div class="modal-header">
           <h2 class="modal-title">Add Care Recipient Profile</h2>
           <button id="btn-close-profile-modal" class="btn-close">&times;</button>
@@ -335,8 +494,8 @@
         <div class="modal-body">
           <form id="add-profile-form">
             <div class="form-group">
-              <label for="new-profile-name" class="form-label">Recipient Name or Nickname:</label>
-              <input type="text" id="new-profile-name" class="form-select" placeholder="e.g. Sam, Lucas, Grandma Helen" required />
+              <label for="new-profile-name" class="form-label">Recipient Name:</label>
+              <input type="text" id="new-profile-name" class="form-select" placeholder="e.g. Sam, Lucas, Emma" required />
             </div>
             <div class="form-row">
               <div class="form-group half-width">
@@ -350,7 +509,7 @@
               <div class="form-group half-width">
                 <label for="new-profile-vocab" class="form-label">Vocabulary Level:</label>
                 <select id="new-profile-vocab" class="form-select">
-                  <option value="basic">Basic (3 to 5 core words)</option>
+                  <option value="basic">Basic (3 to 5 words)</option>
                   <option value="intermediate">Intermediate (5 to 7 words)</option>
                   <option value="advanced">Advanced (7 to 9 words)</option>
                 </select>
@@ -362,15 +521,14 @@
                 <option value="4">4 Cards (High Clarity)</option>
                 <option value="6" selected>6 Cards (Standard)</option>
                 <option value="8">8 Cards (Extended)</option>
-                <option value="10">10 Cards (Complex)</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="new-profile-notes" class="form-label">Caregiver Communication Notes (Optional):</label>
-              <textarea id="new-profile-notes" class="form-textarea" rows="2" placeholder="e.g., Prefers yellow food cards, easily fatigued in afternoons"></textarea>
+              <label for="new-profile-notes" class="form-label">Communication Notes (Optional):</label>
+              <textarea id="new-profile-notes" class="form-textarea" rows="2" placeholder="e.g., Loves morning routines, responsive to orange food cards"></textarea>
             </div>
             <div class="modal-footer" style="padding:0; margin-top:1rem; border-top:none;">
-              <button type="submit" class="btn btn-primary btn-block">Create Profile in Firestore</button>
+              <button type="submit" class="btn btn-primary btn-block">Save Recipient Profile</button>
             </div>
           </form>
         </div>

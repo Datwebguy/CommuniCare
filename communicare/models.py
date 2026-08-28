@@ -1,11 +1,11 @@
 """
 Data models and schemas for CommuniCare.
-Defines AAC symbols, multi tenant recipient profiles, pipeline trace, and API contracts.
+Defines AAC symbols, multi tenant recipient profiles, authentication, pipeline trace, and API contracts.
 """
 
 from enum import Enum
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 
 
@@ -118,3 +118,62 @@ class FeedbackResponse(BaseModel):
     message: str
     recipient_id: str
     updated_memory_summary: Dict[str, Any]
+
+
+# =========================================================================
+# User Account & Authentication Models (Google Authenticator 2FA, JWT)
+# =========================================================================
+
+class UserAccount(BaseModel):
+    user_id: str
+    email: str
+    full_name: str
+    hashed_password: str
+    totp_secret: Optional[str] = None
+    totp_enabled: bool = False
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    reset_token: Optional[str] = None
+    reset_token_expires: Optional[str] = None
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+    totp_code: Optional[str] = None
+
+
+class AuthResponse(BaseModel):
+    status: str
+    token: Optional[str] = None
+    user_id: Optional[str] = None
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    totp_required: bool = False
+    totp_enabled: bool = False
+    message: Optional[str] = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    reset_token: str
+    new_password: str
+
+
+class TwoFactorSetupResponse(BaseModel):
+    totp_secret: str
+    otpauth_url: str
+    instructions: str
+
+
+class TwoFactorVerifyRequest(BaseModel):
+    totp_code: str

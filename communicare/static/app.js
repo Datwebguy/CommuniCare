@@ -1,11 +1,11 @@
 /**
  * CommuniCare Interactive AAC Studio Controller
- * Multi tenant caregiver isolation, customizable voice engine, sleek in-app toasts, and reliable speech sequencing.
+ * Full user authentication, Google Authenticator 2FA, password recovery,
+ * multi tenant caregiver isolation, voice tone studio, and reliable speech sequencing.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
-  const caregiverSelect = document.getElementById('caregiver-select');
+  // DOM Elements - Studio & Board
   const caregiverMessageInput = document.getElementById('caregiver-message');
   const recipientSelect = document.getElementById('recipient-select');
   const btnAddProfile = document.getElementById('btn-add-profile');
@@ -26,19 +26,61 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnVoiceSettings = document.getElementById('btn-voice-settings');
   const btnPrintBoard = document.getElementById('btn-print-board');
   const btnFullscreen = document.getElementById('btn-fullscreen');
-  const btnMemoryView = document.getElementById('btn-memory-view');
   const btnDemoTour = document.getElementById('btn-demo-tour');
-  const memoryModal = document.getElementById('memory-modal');
-  const btnCloseModal = document.getElementById('btn-close-modal');
-  const btnCloseModalBottom = document.getElementById('btn-close-modal-bottom');
-  const memoryProfileSummary = document.getElementById('memory-profile-summary');
-  const learnedVocabCloud = document.getElementById('learned-vocab-cloud');
-  const symbolPrefList = document.getElementById('symbol-pref-list');
   const presentationBanner = document.getElementById('presentation-banner');
   const btnExitPresentation = document.getElementById('btn-exit-presentation');
   const presentationRecipient = document.getElementById('presentation-recipient');
 
-  // Add Profile Modal Elements
+  // DOM Elements - User Profile & Dropdown
+  const btnUserMenu = document.getElementById('btn-user-menu');
+  const userDropdownMenu = document.getElementById('user-dropdown-menu');
+  const userDisplayName = document.getElementById('user-display-name');
+  const userAvatarInitials = document.getElementById('user-avatar-initials');
+  const dropdownUserName = document.getElementById('dropdown-user-name');
+  const dropdownUserEmail = document.getElementById('dropdown-user-email');
+  const dropdown2faBadge = document.getElementById('dropdown-2fa-badge');
+  const dropdownBtn2fa = document.getElementById('dropdown-btn-2fa');
+  const dropdownBtnMemory = document.getElementById('dropdown-btn-memory');
+  const dropdownBtnAddRecipient = document.getElementById('dropdown-btn-add-recipient');
+  const dropdownBtnAuth = document.getElementById('dropdown-btn-auth');
+  const dropdownAuthLabel = document.getElementById('dropdown-auth-label');
+
+  // DOM Elements - Auth Modal
+  const authModal = document.getElementById('auth-modal');
+  const btnCloseAuthModal = document.getElementById('btn-close-auth-modal');
+  const authModalTitle = document.getElementById('auth-modal-title');
+  const tabAuthLogin = document.getElementById('tab-auth-login');
+  const tabAuthRegister = document.getElementById('tab-auth-register');
+  const tabAuthForgot = document.getElementById('tab-auth-forgot');
+  const authAlert = document.getElementById('auth-alert');
+  const formAuthLogin = document.getElementById('form-auth-login');
+  const loginEmail = document.getElementById('login-email');
+  const loginPassword = document.getElementById('login-password');
+  const login2faField = document.getElementById('login-2fa-field');
+  const loginTotp = document.getElementById('login-totp');
+  const formAuthRegister = document.getElementById('form-auth-register');
+  const regFullname = document.getElementById('reg-fullname');
+  const regEmail = document.getElementById('reg-email');
+  const regPassword = document.getElementById('reg-password');
+  const formAuthForgot = document.getElementById('form-auth-forgot');
+  const forgotEmail = document.getElementById('forgot-email');
+  const resetTokenGroup = document.getElementById('reset-token-group');
+  const resetToken = document.getElementById('reset-token');
+  const resetNewPassword = document.getElementById('reset-new-password');
+  const btnSubmitForgot = document.getElementById('btn-submit-forgot');
+
+  // DOM Elements - 2FA Security Modal
+  const twofactorModal = document.getElementById('twofactor-modal');
+  const btnClose2faModal = document.getElementById('btn-close-2fa-modal');
+  const twofactorStatusBox = document.getElementById('twofactor-status-box');
+  const twofactorSetupView = document.getElementById('twofactor-setup-view');
+  const twofactorActiveView = document.getElementById('twofactor-active-view');
+  const twofactorSecretKey = document.getElementById('twofactor-secret-key');
+  const twofactorVerifyCode = document.getElementById('twofactor-verify-code');
+  const btnEnable2faConfirm = document.getElementById('btn-enable-2fa-confirm');
+  const btnDisable2fa = document.getElementById('btn-disable-2fa');
+
+  // DOM Elements - Add Profile Modal
   const addProfileModal = document.getElementById('add-profile-modal');
   const btnCloseProfileModal = document.getElementById('btn-close-profile-modal');
   const addProfileForm = document.getElementById('add-profile-form');
@@ -48,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const newProfileCards = document.getElementById('new-profile-cards');
   const newProfileNotes = document.getElementById('new-profile-notes');
 
-  // Voice Settings Modal Elements
+  // DOM Elements - Voice Settings Modal
   const voiceModal = document.getElementById('voice-modal');
   const btnCloseVoiceModal = document.getElementById('btn-close-voice-modal');
   const voicePersonaSelect = document.getElementById('voice-persona-select');
@@ -61,14 +103,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnTestVoice = document.getElementById('btn-test-voice');
   const btnSaveVoice = document.getElementById('btn-save-voice');
 
+  // DOM Elements - Memory Modal
+  const memoryModal = document.getElementById('memory-modal');
+  const btnCloseModal = document.getElementById('btn-close-modal');
+  const btnCloseModalBottom = document.getElementById('btn-close-modal-bottom');
+  const memoryProfileSummary = document.getElementById('memory-profile-summary');
+  const learnedVocabCloud = document.getElementById('learned-vocab-cloud');
+  const symbolPrefList = document.getElementById('symbol-pref-list');
+
   // Application State
   let currentBoard = null;
   let currentPresets = [];
   let currentRecipients = [];
   let isGenerating = false;
-  let isTraceExpanded = true;
+  let isTraceExpanded = false;
   let isSpeakingAll = false;
   let systemVoices = [];
+
+  // Authenticated User State
+  let currentUser = {
+    user_id: 'caregiver_primary',
+    email: 'sarah@clinic.local',
+    full_name: 'Dr. Sarah Jenkins',
+    totp_enabled: false,
+    token: null
+  };
 
   // Voice Configuration State
   let voiceConfig = {
@@ -88,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* =========================================================================
-     IN-APP TOAST NOTIFICATION SYSTEM (No Native Browser Alerts)
+     IN-APP TOAST NOTIFICATION SYSTEM
      ========================================================================= */
   function showToast(title, message, type = 'info', duration = 4000) {
     const toast = document.createElement('div');
@@ -119,33 +178,127 @@ document.addEventListener('DOMContentLoaded', () => {
     }, duration);
   }
 
-  // Active Caregiver ID helper
-  function getActiveCaregiverId() {
-    return caregiverSelect ? caregiverSelect.value : 'caregiver_primary';
+  // Request Headers with Multi-Tenant Auth Token
+  function getAuthHeaders(includeContentType = true) {
+    const headers = {};
+    if (includeContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (currentUser && currentUser.token) {
+      headers['Authorization'] = `Bearer ${currentUser.token}`;
+    }
+    headers['X-Caregiver-ID'] = (currentUser && currentUser.user_id) ? currentUser.user_id : 'caregiver_primary';
+    return headers;
   }
 
   // Initialize
   initApp();
 
   async function initApp() {
+    restoreUserSession();
     initVoiceEngine();
     await reloadCaregiverWorkspace();
     setupEventListeners();
   }
 
   /* =========================================================================
+     AUTHENTICATION & SESSION MANAGEMENT
+     ========================================================================= */
+  function restoreUserSession() {
+    try {
+      const savedUser = localStorage.getItem('communicare_user');
+      const savedToken = localStorage.getItem('communicare_token');
+      if (savedUser && savedToken) {
+        currentUser = JSON.parse(savedUser);
+        currentUser.token = savedToken;
+      }
+    } catch (e) {}
+
+    updateUserUI();
+  }
+
+  function updateUserUI() {
+    if (!currentUser || !currentUser.user_id) {
+      currentUser = {
+        user_id: 'caregiver_primary',
+        email: 'sarah@clinic.local',
+        full_name: 'Dr. Sarah Jenkins',
+        totp_enabled: false,
+        token: null
+      };
+    }
+
+    const initials = currentUser.full_name
+      .split(' ')
+      .map(p => p[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase() || 'U';
+
+    if (userAvatarInitials) userAvatarInitials.textContent = initials;
+    if (userDisplayName) userDisplayName.textContent = currentUser.full_name.split(' ')[0] || 'Caregiver';
+    if (dropdownUserName) dropdownUserName.textContent = currentUser.full_name;
+    if (dropdownUserEmail) dropdownUserEmail.textContent = currentUser.email;
+
+    if (dropdown2faBadge) {
+      if (currentUser.totp_enabled) {
+        dropdown2faBadge.textContent = 'Active (2FA)';
+        dropdown2faBadge.className = 'badge-subtle badge-active';
+      } else {
+        dropdown2faBadge.textContent = 'Off';
+        dropdown2faBadge.className = 'badge-subtle';
+      }
+    }
+
+    if (dropdownAuthLabel) {
+      dropdownAuthLabel.textContent = currentUser.token ? '🚪 Sign Out / Switch Account' : '🔑 Sign In / Register';
+    }
+  }
+
+  function setAuthAlert(msg, type = 'error') {
+    if (!msg) {
+      authAlert.classList.add('hidden');
+      authAlert.innerHTML = '';
+      return;
+    }
+    authAlert.className = `auth-alert-box alert-${type}`;
+    authAlert.innerHTML = msg;
+    authAlert.classList.remove('hidden');
+  }
+
+  function switchAuthTab(tab) {
+    setAuthAlert('');
+    tabAuthLogin.classList.toggle('active', tab === 'login');
+    tabAuthRegister.classList.toggle('active', tab === 'register');
+    tabAuthForgot.classList.toggle('active', tab === 'forgot');
+
+    formAuthLogin.classList.toggle('hidden', tab !== 'login');
+    formAuthRegister.classList.toggle('hidden', tab !== 'register');
+    formAuthForgot.classList.toggle('hidden', tab !== 'forgot');
+
+    if (tab === 'login') {
+      authModalTitle.textContent = 'Sign In to CommuniCare';
+      login2faField.classList.add('hidden');
+      loginTotp.value = '';
+    } else if (tab === 'register') {
+      authModalTitle.textContent = 'Create Caregiver Account';
+    } else if (tab === 'forgot') {
+      authModalTitle.textContent = 'Reset Account Password';
+      resetTokenGroup.classList.add('hidden');
+      btnSubmitForgot.querySelector('span').textContent = 'Request Reset Token';
+    }
+  }
+
+  /* =========================================================================
      VOICE & AUDIO ENGINE
      ========================================================================= */
   function initVoiceEngine() {
-    if (!('speechSynthesis' in window)) {
-      console.warn('Speech synthesis not supported in this browser.');
-      return;
-    }
+    if (!('speechSynthesis' in window)) return;
 
     const loadVoices = () => {
       systemVoices = window.speechSynthesis.getVoices();
       if (systemVoices.length > 0 && systemVoiceSelect) {
-        systemVoiceSelect.innerHTML = '<option value="">Automatic Default Voice</option>';
+        systemVoiceSelect.innerHTML = '<option value="">Default System Voice</option>';
         systemVoices.forEach(v => {
           const opt = document.createElement('option');
           opt.value = v.voiceURI;
@@ -268,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       utterance.onend = finish;
       utterance.onerror = (e) => {
-        console.warn('Speech error/interrupted:', e);
+        console.warn('Speech error:', e);
         finish();
       };
 
@@ -329,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* =========================================================================
-     WORKSPACE & DATA LOADING
+     WORKSPACE & DATA LOADING (ISOLATED PER USER)
      ========================================================================= */
   async function reloadCaregiverWorkspace(selectedRecipientId = null) {
     await loadRecipients(selectedRecipientId);
@@ -337,10 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadRecipients(selectedId = null) {
-    const cid = getActiveCaregiverId();
     try {
-      const res = await fetch(`/api/recipients?caregiver_id=${encodeURIComponent(cid)}`, {
-        headers: { 'X-Caregiver-ID': cid }
+      const res = await fetch('/api/recipients', {
+        headers: getAuthHeaders(false)
       });
       if (res.ok) {
         currentRecipients = await res.json();
@@ -372,10 +524,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadPresets() {
-    const cid = getActiveCaregiverId();
     try {
-      const res = await fetch(`/api/presets?caregiver_id=${encodeURIComponent(cid)}`, {
-        headers: { 'X-Caregiver-ID': cid }
+      const res = await fetch('/api/presets', {
+        headers: getAuthHeaders(false)
       });
       if (res.ok) {
         currentPresets = await res.json();
@@ -395,6 +546,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPresets() {
     presetsContainer.innerHTML = '';
+    if (currentPresets.length === 0) {
+      presetsContainer.innerHTML = '<span style="font-size:0.75rem; color:var(--color-stone-gray);">No presets saved yet.</span>';
+      return;
+    }
+
     currentPresets.forEach((p) => {
       const icon = PRESET_ICONS[p.id] || "📋";
       const chip = document.createElement('button');
@@ -414,17 +570,274 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* =========================================================================
-     EVENT LISTENERS
+     EVENT LISTENERS & MODAL CONTROLS
      ========================================================================= */
   function setupEventListeners() {
-    if (caregiverSelect) {
-      caregiverSelect.addEventListener('change', () => {
-        reloadCaregiverWorkspace();
-      });
-    }
+    // User Profile Dropdown Toggle
+    btnUserMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userDropdownMenu.classList.toggle('hidden');
+    });
 
+    document.addEventListener('click', (e) => {
+      if (!userDropdownMenu.contains(e.target) && !btnUserMenu.contains(e.target)) {
+        userDropdownMenu.classList.add('hidden');
+      }
+    });
+
+    // Dropdown Item Actions
+    dropdownBtn2fa.addEventListener('click', () => {
+      userDropdownMenu.classList.add('hidden');
+      open2faModal();
+    });
+
+    dropdownBtnMemory.addEventListener('click', () => {
+      userDropdownMenu.classList.add('hidden');
+      openMemoryModal();
+    });
+
+    dropdownBtnAddRecipient.addEventListener('click', () => {
+      userDropdownMenu.classList.add('hidden');
+      addProfileForm.reset();
+      addProfileModal.classList.remove('hidden');
+      newProfileName.focus();
+    });
+
+    dropdownBtnAuth.addEventListener('click', () => {
+      userDropdownMenu.classList.add('hidden');
+      if (currentUser.token) {
+        // Sign Out
+        localStorage.removeItem('communicare_user');
+        localStorage.removeItem('communicare_token');
+        currentUser = {
+          user_id: 'caregiver_primary',
+          email: 'sarah@clinic.local',
+          full_name: 'Dr. Sarah Jenkins',
+          totp_enabled: false,
+          token: null
+        };
+        updateUserUI();
+        reloadCaregiverWorkspace();
+        showToast('Signed Out', 'You have been signed out to guest mode.', 'info');
+      } else {
+        switchAuthTab('login');
+        authModal.classList.remove('hidden');
+      }
+    });
+
+    // Auth Modal Navigation
+    tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
+    tabAuthRegister.addEventListener('click', () => switchAuthTab('register'));
+    tabAuthForgot.addEventListener('click', () => switchAuthTab('forgot'));
+    btnCloseAuthModal.addEventListener('click', () => authModal.classList.add('hidden'));
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) authModal.classList.add('hidden');
+    });
+
+    // Auth: Sign In Submission
+    formAuthLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setAuthAlert('');
+      const email = loginEmail.value.trim();
+      const password = loginPassword.value;
+      const totpCode = loginTotp.value.trim();
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email,
+            password: password,
+            totp_code: totpCode || null
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || data.status === 'error') {
+          setAuthAlert(data.detail || data.message || 'Invalid email or password.');
+          return;
+        }
+
+        if (data.status === '2fa_required') {
+          login2faField.classList.remove('hidden');
+          loginTotp.focus();
+          setAuthAlert('🔐 Please enter the 6-digit code from Google Authenticator to continue.', 'info');
+          return;
+        }
+
+        if (data.status === 'success') {
+          currentUser = {
+            user_id: data.user_id,
+            email: data.email,
+            full_name: data.full_name,
+            totp_enabled: data.totp_enabled,
+            token: data.token
+          };
+          localStorage.setItem('communicare_user', JSON.stringify(currentUser));
+          localStorage.setItem('communicare_token', data.token);
+
+          updateUserUI();
+          authModal.classList.add('hidden');
+          await reloadCaregiverWorkspace();
+          showToast('Welcome Back!', `Signed in as ${data.full_name}`, 'success');
+        }
+      } catch (err) {
+        setAuthAlert(`Sign in error: ${err.message}`);
+      }
+    });
+
+    // Auth: Sign Up (Register) Submission
+    formAuthRegister.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setAuthAlert('');
+      const name = regFullname.value.trim();
+      const email = regEmail.value.trim();
+      const password = regPassword.value;
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: name,
+            email: email,
+            password: password
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          setAuthAlert(data.detail || 'Could not register account.');
+          return;
+        }
+
+        currentUser = {
+          user_id: data.user_id,
+          email: data.email,
+          full_name: data.full_name,
+          totp_enabled: false,
+          token: data.token
+        };
+        localStorage.setItem('communicare_user', JSON.stringify(currentUser));
+        localStorage.setItem('communicare_token', data.token);
+
+        updateUserUI();
+        authModal.classList.add('hidden');
+        await reloadCaregiverWorkspace();
+        showToast('Account Created', `Welcome to CommuniCare, ${data.full_name}! Your isolated workspace is ready.`, 'success', 5000);
+      } catch (err) {
+        setAuthAlert(`Registration error: ${err.message}`);
+      }
+    });
+
+    // Auth: Forgot Password Submission
+    formAuthForgot.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setAuthAlert('');
+      const email = forgotEmail.value.trim();
+      const tokenVal = resetToken.value.trim();
+      const newPass = resetNewPassword.value;
+
+      if (resetTokenGroup.classList.contains('hidden')) {
+        // Step 1: Request token
+        try {
+          const res = await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+          });
+          const data = await res.json();
+          resetTokenGroup.classList.remove('hidden');
+          if (data.reset_token_preview) {
+            resetToken.value = data.reset_token_preview;
+          }
+          btnSubmitForgot.querySelector('span').textContent = 'Set New Password';
+          setAuthAlert(`Password reset token generated. Paste it below and choose a new password.`, 'info');
+        } catch (err) {
+          setAuthAlert(`Error: ${err.message}`);
+        }
+      } else {
+        // Step 2: Set new password
+        try {
+          const res = await fetch('/api/auth/reset-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: email,
+              reset_token: tokenVal,
+              new_password: newPass
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setAuthAlert(data.detail || 'Could not reset password.');
+            return;
+          }
+          switchAuthTab('login');
+          showToast('Password Reset', 'Password updated successfully. Please sign in.', 'success');
+        } catch (err) {
+          setAuthAlert(`Reset error: ${err.message}`);
+        }
+      }
+    });
+
+    // 2FA Security Modal Handlers
+    btnClose2faModal.addEventListener('click', () => twofactorModal.classList.add('hidden'));
+    twofactorModal.addEventListener('click', (e) => {
+      if (e.target === twofactorModal) twofactorModal.classList.add('hidden');
+    });
+
+    btnEnable2faConfirm.addEventListener('click', async () => {
+      const code = twofactorVerifyCode.value.trim();
+      if (code.length !== 6) {
+        showToast('Code Required', 'Please enter a valid 6-digit code from Google Authenticator.', 'warning');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/2fa/enable', {
+          method: 'POST',
+          headers: getAuthHeaders(true),
+          body: JSON.stringify({ totp_code: code })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast('Invalid Code', data.detail || 'Invalid 6-digit code.', 'error');
+          return;
+        }
+
+        currentUser.totp_enabled = true;
+        localStorage.setItem('communicare_user', JSON.stringify(currentUser));
+        updateUserUI();
+        open2faModal();
+        showToast('2FA Activated', 'Google Authenticator 2FA is now active on your account.', 'success');
+      } catch (err) {
+        showToast('2FA Error', err.message, 'error');
+      }
+    });
+
+    btnDisable2fa.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/auth/2fa/disable', {
+          method: 'POST',
+          headers: getAuthHeaders(false)
+        });
+        if (res.ok) {
+          currentUser.totp_enabled = false;
+          localStorage.setItem('communicare_user', JSON.stringify(currentUser));
+          updateUserUI();
+          open2faModal();
+          showToast('2FA Disabled', 'Two-factor authentication has been disabled.', 'info');
+        }
+      } catch (err) {
+        showToast('Error', err.message, 'error');
+      }
+    });
+
+    // Studio & Board Event Listeners
     btnGenerate.addEventListener('click', () => handleGenerateBoard());
-    
+
     document.addEventListener('click', (e) => {
       if (e.target && e.target.id === 'btn-quick-sample') {
         if (currentPresets.length > 0) {
@@ -450,6 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Voice Modal
     btnVoiceSettings.addEventListener('click', () => {
       updateVoiceUIFromConfig();
       voiceModal.classList.remove('hidden');
@@ -502,26 +916,29 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveVoice.addEventListener('click', () => {
       try {
         localStorage.setItem('communicare_voice_config', JSON.stringify(voiceConfig));
-        showToast('Voice Settings Saved', 'Your speech persona preferences have been applied.', 'success');
+        showToast('Voice Settings Applied', 'Your speech persona preferences have been saved.', 'success');
       } catch (e) {}
       voiceModal.classList.add('hidden');
     });
 
-    btnMemoryView.addEventListener('click', () => openMemoryModal());
-    btnCloseModal.addEventListener('click', () => closeMemoryModal());
-    btnCloseModalBottom.addEventListener('click', () => closeMemoryModal());
+    // Memory Inspector Modal
+    btnCloseModal.addEventListener('click', () => memoryModal.classList.add('hidden'));
+    btnCloseModalBottom.addEventListener('click', () => memoryModal.classList.add('hidden'));
     memoryModal.addEventListener('click', (e) => {
-      if (e.target === memoryModal) closeMemoryModal();
+      if (e.target === memoryModal) memoryModal.classList.add('hidden');
     });
 
+    // Add Profile Modal
     btnAddProfile.addEventListener('click', () => {
       addProfileForm.reset();
       addProfileModal.classList.remove('hidden');
       newProfileName.focus();
     });
+
     btnCloseProfileModal.addEventListener('click', () => {
       addProfileModal.classList.add('hidden');
     });
+
     addProfileModal.addEventListener('click', (e) => {
       if (e.target === addProfileModal) addProfileModal.classList.add('hidden');
     });
@@ -531,11 +948,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = newProfileName.value.trim();
       if (!name) return;
 
-      const cid = getActiveCaregiverId();
       const recipientId = name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.floor(Math.random() * 1000);
       const newProfile = {
         recipient_id: recipientId,
-        caregiver_id: cid,
+        caregiver_id: currentUser.user_id,
         name: name,
         age_group: newProfileAge.value,
         vocabulary_level: newProfileVocab.value,
@@ -551,16 +967,13 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const res = await fetch('/api/recipients', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Caregiver-ID': cid
-          },
+          headers: getAuthHeaders(true),
           body: JSON.stringify(newProfile)
         });
         if (res.ok) {
           addProfileModal.classList.add('hidden');
           await loadRecipients(recipientId);
-          showToast('Profile Created', `Profile for "${name}" created successfully in Firestore.`, 'success');
+          showToast('Profile Created', `Profile for "${name}" saved to your private workspace.`, 'success');
         }
       } catch (err) {
         showToast('Profile Error', `Failed to save profile: ${err.message}`, 'error');
@@ -577,22 +990,57 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* =========================================================================
+     2FA MODAL SETUP & FLOW
+     ========================================================================= */
+  async function open2faModal() {
+    twofactorVerifyCode.value = '';
+    twofactorModal.classList.remove('hidden');
+
+    try {
+      const meRes = await fetch('/api/auth/me', { headers: getAuthHeaders(false) });
+      const meData = await meRes.json();
+      currentUser.totp_enabled = meData.totp_enabled;
+
+      if (meData.totp_enabled) {
+        twofactorStatusBox.innerHTML = `<strong>Account Status:</strong> <span style="color:#065F46; font-weight:700;">Active (Protected with 2FA)</span>`;
+        twofactorSetupView.classList.add('hidden');
+        twofactorActiveView.classList.remove('hidden');
+      } else {
+        twofactorStatusBox.innerHTML = `<strong>Account Status:</strong> <span style="color:var(--color-stone-gray);">2FA is currently Disabled</span>`;
+        twofactorActiveView.classList.add('hidden');
+        twofactorSetupView.classList.remove('hidden');
+
+        // Fetch setup secret
+        const setupRes = await fetch('/api/auth/2fa/setup', {
+          method: 'POST',
+          headers: getAuthHeaders(false)
+        });
+        if (setupRes.ok) {
+          const setupData = await setupRes.json();
+          twofactorSecretKey.textContent = setupData.totp_secret;
+        }
+      }
+    } catch (err) {
+      showToast('Error', 'Could not retrieve 2FA status.', 'error');
+    }
+  }
+
+  /* =========================================================================
      BOARD GENERATION & RENDERING
      ========================================================================= */
   async function handleGenerateBoard(customMessage = null, customRecipient = null) {
     const rawMessage = customMessage || caregiverMessageInput.value.trim();
     const recipientId = customRecipient || recipientSelect.value;
     const style = styleSelect.value;
-    const cid = getActiveCaregiverId();
 
     if (!rawMessage) {
-      showToast('Message Required', 'Please enter or select a caregiver message first.', 'warning');
+      showToast('Message Required', 'Please enter a caregiver message or select a preset.', 'warning');
       caregiverMessageInput.focus();
       return;
     }
 
     if (!recipientId) {
-      showToast('Recipient Required', 'Please select or create a care recipient profile first.', 'warning');
+      showToast('Recipient Required', 'Please select or add a recipient profile first.', 'warning');
       return;
     }
 
@@ -607,14 +1055,11 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch('/api/generate-board', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Caregiver-ID': cid
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({
           message: rawMessage,
           recipient_id: recipientId,
-          caregiver_id: cid,
+          caregiver_id: currentUser.user_id,
           simplify_style: style
         })
       });
@@ -639,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       isGenerating = false;
       btnGenerate.disabled = false;
-      btnGenerate.innerHTML = '<span>⚡ Generate AAC Board</span>';
+      btnGenerate.innerHTML = '<span>⚡ Generate Board</span>';
     }
   }
 
@@ -753,18 +1198,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.handleFeedback = async function(boardId, recipientId, cardId, word, action) {
-    const cid = getActiveCaregiverId();
     try {
       const res = await fetch('/api/feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Caregiver-ID': cid
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({
           board_id: boardId,
           recipient_id: recipientId,
-          caregiver_id: cid,
+          caregiver_id: currentUser.user_id,
           card_id: cardId,
           word: word,
           action: action
@@ -792,12 +1233,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function openMemoryModal() {
     const recipientId = recipientSelect.value;
-    const cid = getActiveCaregiverId();
     if (!recipientId) return;
 
     try {
-      const res = await fetch(`/api/recipients/${recipientId}?caregiver_id=${encodeURIComponent(cid)}`, {
-        headers: { 'X-Caregiver-ID': cid }
+      const res = await fetch(`/api/recipients/${recipientId}`, {
+        headers: getAuthHeaders(false)
       });
       if (res.ok) {
         const profile = await res.json();
@@ -807,10 +1247,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       showToast('Memory Error', `Could not load memory for ${recipientId}`, 'error');
     }
-  }
-
-  function closeMemoryModal() {
-    memoryModal.classList.add('hidden');
   }
 
   function renderMemoryModal(profile) {
@@ -849,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* =========================================================================
-     SMOOTH AUTOMATED ADAPTIVE DEMO (No Disruptive Browser Alerts)
+     SMOOTH AUTOMATED ADAPTIVE DEMO
      ========================================================================= */
   async function runAdaptiveDemo() {
     showToast('Adaptive Demo Started', 'Turn 1 of 2: Processing morning routine message for Leo...', 'info', 5000);
@@ -865,14 +1301,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await fetch('/api/feedback', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Caregiver-ID': getActiveCaregiverId()
-      },
+      headers: getAuthHeaders(true),
       body: JSON.stringify({
         board_id: currentBoard ? currentBoard.board_id : 'demo',
         recipient_id: recipientSelect.value,
-        caregiver_id: getActiveCaregiverId(),
+        caregiver_id: currentUser.user_id,
         word: 'medicine',
         action: 'worked_well',
         preferred_symbol: 'medicine'

@@ -1,7 +1,7 @@
 """
 Firestore State and Memory Service for CommuniCare.
-Manages per recipient AAC vocabulary profiles, symbol preferences, and dynamic presets.
-Provides multi tenant caregiver isolation and persistent memory.
+Manages per recipient AAC vocabulary profiles, symbol preferences, user accounts, and dynamic presets.
+Provides strict multi tenant caregiver isolation and persistent memory.
 """
 
 import os
@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
-from communicare.models import RecipientProfile
+from communicare.models import RecipientProfile, UserAccount
 
 logger = logging.getLogger("communicare.firestore")
 
@@ -108,7 +108,7 @@ DEFAULT_PRESETS = [
 class FirestoreService:
     """
     Multi tenant state manager handling care recipient memory, vocabulary profiles,
-    and adaptive learning across multiple communication sessions with user isolation.
+    user accounts, and adaptive learning across communication sessions with user isolation.
     """
 
     def __init__(self):
@@ -116,6 +116,7 @@ class FirestoreService:
         self.local_storage_dir = Path("./data")
         self.local_storage_file = self.local_storage_dir / "recipient_profiles.json"
         self.presets_file = self.local_storage_dir / "presets.json"
+        self.users_file = self.local_storage_dir / "users.json"
         self.db = None
         self._is_live_firestore = False
         
@@ -141,9 +142,92 @@ class FirestoreService:
         if not self.presets_file.exists():
             with open(self.presets_file, "w", encoding="utf-8") as f:
                 json.dump(DEFAULT_PRESETS, f, indent=2)
+        if not self.users_file.exists():
+            with open(self.users_file, "w", encoding="utf-8") as f:
+                json.dump({}, f, indent=2)
+
+    # =========================================================================
+    # USER ACCOUNT MANAGEMENT & STRICT ISOLATION
+    # =========================================================================
+
+    def get_user_by_email(self, email: str) -> Optional[UserAccount]:
+        """Look up user by email address."""
+        email_clean = email.strip().lower()
+        if self._is_live_firestore and self.db:
+            try:
+                docs = self.db.collection("users").where("email", "==", email_clean).limit(1).stream()
+                for doc in docs:
+                    return UserAccount(**doc.to_dict())
+            except Exception as e:
+                logger.error(f"Error fetching user from Firestore: {e}")
+
+        users = self._read_local_users()
+        for u in users.values():
+            if u.get("email", "").lower() == email_clean:
+                return UserAccount(**u)
+        return None
+
+    def get_user_by_id(self, user_id: str) -> Optional[UserAccount]:
+        """Look up user by user ID."""
+        if self._is_live_firestore and self.db:
+            try:
+                doc = self.db.collection("users").document(user_id).get()
+                if doc.exists:
+                    return UserAccount(**doc.to_dict())
+            except Exception as e:
+                logger.error(f"Error fetching user by ID from Firestore: {e}")
+
+        users = self._read_local_users()
+        if user_id in users:
+            return UserAccount(**users[user_id])
+        return None
+
+    def save_user(self, user: UserAccount) -> bool:
+        """Save or update user account."""
+        user_dict = user.model_dump()
+        if self._is_live_firestore and self.db:
+            try:
+                self.db.collection("users").document(user.user_id).set(user_dict)
+                return True
+            except Exception as e:
+                logger.error(f"Error saving user to Firestore: {e}")
+
+        users = self._read_local_users()
+        users[user.user_id] = user_dict
+        self._write_local_users(users)
+        return True
+
+    def initialize_user_workspace(self, user_id: str, user_name: str):
+        """Create clean initial starter recipient and preset for a newly registered user."""
+        starter_recipient = RecipientProfile(
+            recipient_id=f"recipient_{user_id[:8]}",
+            caregiver_id=user_id,
+            name="Alex",
+            age_group="child",
+            vocabulary_level="basic",
+            max_board_cards=6,
+            learned_vocabulary=["eat", "water", "help", "happy"],
+            success_history={"water": 1, "eat": 1},
+            caregiver_notes=f"Primary communication profile for {user_name}'s workspace."
+        )
+        self.save_recipient_profile(starter_recipient)
+
+        starter_preset = {
+            "id": f"preset_morning_{user_id[:8]}",
+            "caregiver_id": user_id,
+            "title": "Morning Routine Starter",
+            "description": "Daily morning routine",
+            "recipient_id": starter_recipient.recipient_id,
+            "message": "Good morning Alex! Time to eat breakfast and drink a glass of water."
+        }
+        self.save_preset(starter_preset, caregiver_id=user_id)
+
+    # =========================================================================
+    # RECIPIENT PROFILES (SCOPED PER CAREGIVER)
+    # =========================================================================
 
     def get_recipient_profile(self, recipient_id: str, caregiver_id: str = "caregiver_primary") -> RecipientProfile:
-        """Fetch recipient profile with caregiver scoping."""
+        """Fetch recipient profile strictly scoped to the requesting caregiver."""
         if self._is_live_firestore and self.db:
             try:
                 doc = self.db.collection("caregivers").document(caregiver_id).collection("recipients").document(recipient_id).get()
@@ -156,11 +240,11 @@ class FirestoreService:
         profiles = self._read_local_profiles()
         if recipient_id in profiles:
             p = profiles[recipient_id]
-            # Match or fallback for default demo profiles
-            if p.get("caregiver_id", "caregiver_primary") == caregiver_id or caregiver_id == "caregiver_primary":
+            # Match caregiver ID, or allow default demo profile for caregiver_primary
+            if p.get("caregiver_id") == caregiver_id or (caregiver_id == "caregiver_primary" and p.get("caregiver_id") == "caregiver_primary"):
                 return RecipientProfile(**p)
         
-        # Create a new profile if not found
+        # Create a new profile scoped to this user
         new_profile = RecipientProfile(
             recipient_id=recipient_id,
             caregiver_id=caregiver_id,
@@ -216,7 +300,9 @@ class FirestoreService:
         profiles = self._read_local_profiles()
         results = []
         for data in profiles.values():
-            if data.get("caregiver_id") == caregiver_id or caregiver_id == "caregiver_primary":
+            if data.get("caregiver_id") == caregiver_id:
+                results.append(RecipientProfile(**data))
+            elif caregiver_id == "caregiver_primary" and data.get("caregiver_id") == "caregiver_primary":
                 results.append(RecipientProfile(**data))
         return results
 
@@ -235,10 +321,19 @@ class FirestoreService:
             if self.presets_file.exists():
                 with open(self.presets_file, "r", encoding="utf-8") as f:
                     all_presets = json.load(f)
-                    return [p for p in all_presets if p.get("caregiver_id", "caregiver_primary") == caregiver_id or caregiver_id == "caregiver_primary"]
+                    matched = [p for p in all_presets if p.get("caregiver_id") == caregiver_id]
+                    if caregiver_id == "caregiver_primary":
+                        # Merge defaults with custom saved presets
+                        existing_ids = {p.get("id") for p in matched}
+                        combined = list(matched)
+                        for d in DEFAULT_PRESETS:
+                            if d.get("id") not in existing_ids:
+                                combined.append(d)
+                        return combined
+                    return matched
         except Exception as e:
             logger.error(f"Error reading presets file: {e}")
-        return DEFAULT_PRESETS
+        return DEFAULT_PRESETS if caregiver_id == "caregiver_primary" else []
 
     def save_preset(self, preset: Dict, caregiver_id: str = "caregiver_primary") -> bool:
         """Save a new preset isolated by caregiver."""
@@ -253,16 +348,23 @@ class FirestoreService:
             except Exception as e:
                 logger.error(f"Error saving preset to Firestore: {e}")
 
-        presets = self.list_presets(caregiver_id)
-        existing = next((i for i, p in enumerate(presets) if p["id"] == preset_id), None)
+        all_presets = []
+        try:
+            if self.presets_file.exists():
+                with open(self.presets_file, "r", encoding="utf-8") as f:
+                    all_presets = json.load(f)
+        except Exception:
+            all_presets = []
+
+        existing = next((i for i, p in enumerate(all_presets) if p["id"] == preset_id), None)
         if existing is not None:
-            presets[existing] = preset
+            all_presets[existing] = preset
         else:
-            presets.append(preset)
+            all_presets.append(preset)
 
         try:
             with open(self.presets_file, "w", encoding="utf-8") as f:
-                json.dump(presets, f, indent=2)
+                json.dump(all_presets, f, indent=2)
             return True
         except Exception as e:
             logger.error(f"Error saving preset to file: {e}")
@@ -314,6 +416,23 @@ class FirestoreService:
                 json.dump(data, f, indent=2)
         except Exception as e:
             logger.error(f"Error writing to local profile store: {e}")
+
+    def _read_local_users(self) -> Dict[str, Dict]:
+        try:
+            if self.users_file.exists():
+                with open(self.users_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+        except Exception as e:
+            logger.error(f"Error reading local user store: {e}")
+        return {}
+
+    def _write_local_users(self, data: Dict[str, Dict]):
+        try:
+            self.local_storage_dir.mkdir(parents=True, exist_ok=True)
+            with open(self.users_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+        except Exception as e:
+            logger.error(f"Error writing to local user store: {e}")
 
 
 firestore_service = FirestoreService()
