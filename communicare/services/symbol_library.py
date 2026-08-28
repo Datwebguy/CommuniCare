@@ -130,6 +130,38 @@ SVG_ICONS: Dict[str, str] = {
 }
 
 
+# Common clinical & vocabulary synonyms mapping to curated vector assets
+COMMON_SYNONYMS: Dict[str, str] = {
+    "pills": "medicine",
+    "pill": "medicine",
+    "tablets": "medicine",
+    "tablet": "medicine",
+    "meds": "medicine",
+    "medication": "medicine",
+    "puppy": "dog",
+    "doggie": "dog",
+    "hound": "dog",
+    "stroll": "walk",
+    "walking": "walk",
+    "physician": "doctor",
+    "md": "doctor",
+    "eating": "breakfast",
+    "meal": "breakfast",
+    "pancake": "pancakes",
+    "egg": "eggs",
+    "rest": "sleep",
+    "sleeping": "sleep",
+    "bed": "sleep",
+    "pain": "hurt",
+    "ache": "hurt",
+    "joy": "happy",
+    "glad": "happy",
+    "water_glass": "water",
+    "drink": "water",
+    "drinking": "water",
+}
+
+
 def normalize_term(term: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9\s_]", "", term.lower().strip())
     return cleaned.replace(" ", "_")
@@ -143,6 +175,7 @@ class SymbolResolver:
 
     def __init__(self):
         self.svg_icons = SVG_ICONS
+        self.synonyms = COMMON_SYNONYMS
         self.palette = FITZGERALD_PALETTE
         # Dynamic in-memory and network cache for ARASAAC lookups
         self._arasaac_cache: Dict[str, Optional[int]] = {}
@@ -158,11 +191,12 @@ class SymbolResolver:
         """
         norm_concept = normalize_term(concept)
 
-        # 1. Check local high-contrast vector library
-        if norm_concept in self.svg_icons:
+        # 1. Check local high-contrast vector library (direct or synonym)
+        target_key = norm_concept if norm_concept in self.svg_icons else self.synonyms.get(norm_concept)
+        if target_key and target_key in self.svg_icons:
             category = self._infer_category(concept, category_hint)
             color_code, bg_color, _ = self.palette[category]
-            svg_icon = self.svg_icons[norm_concept]
+            svg_icon = self.svg_icons[target_key]
 
             return SymbolCard(
                 id=f"sym_{norm_concept}",
