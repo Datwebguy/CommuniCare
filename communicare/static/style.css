@@ -1683,6 +1683,40 @@ html, body {
   }
 }
 
+/* Smartphone Header & Component Tuning (<480px) */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0.5rem 0.65rem;
+  }
+  .brand-name {
+    font-size: 0.95rem;
+  }
+  .brand-icon {
+    width: 26px;
+    height: 26px;
+  }
+  .brand-link {
+    gap: 0.4rem;
+  }
+  .header-recipient-selector {
+    padding: 0.25rem 0.4rem;
+    max-width: 120px;
+  }
+  .header-select {
+    font-size: 0.72rem;
+    max-width: 80px;
+  }
+  .btn-icon-sm {
+    width: 18px;
+    height: 18px;
+    font-size: 0.72rem;
+  }
+  .modal-container {
+    width: 95%;
+    max-height: 90vh;
+  }
+}
+
 /* Extra Small Phones (<400px) */
 @media (max-width: 400px) {
   .aac-grid {
