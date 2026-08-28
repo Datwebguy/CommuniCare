@@ -101,11 +101,11 @@
     <!-- Main Studio Canvas -->
     <main class="main-content">
 
-      <!-- Composer Card: Quick Presets + Message Input -->
+      <!-- Composer Card: Quick Topics + Message Input -->
       <section class="studio-card">
         <!-- Scenario Presets -->
         <div class="presets-row">
-          <span class="presets-label">Quick Presets:</span>
+          <span class="presets-label">Quick Topics:</span>
           <div id="presets-container" class="presets-chips">
             <!-- Dynamically populated from /api/presets -->
           </div>
@@ -118,7 +118,7 @@
               id="caregiver-message"
               class="form-textarea"
               rows="2"
-              placeholder="Type a caregiver message or care note (e.g., 'Good morning Leo! Please take your medicine with water, then eat pancakes for breakfast and we will go to the park.')"
+              placeholder="Type what you want to say (e.g., 'Good morning Leo! Please take your medicine with water, then eat pancakes for breakfast.')"
             ></textarea>
           </div>
 
@@ -127,11 +127,11 @@
               <label for="style-select" class="form-label-inline">Style:</label>
               <select id="style-select" class="form-select-sm">
                 <option value="core_words">Core Words</option>
-                <option value="step_by_step">Sequential Steps</option>
+                <option value="step_by_step">Step by Step</option>
               </select>
             </div>
             <button id="btn-generate" class="btn btn-primary btn-generate">
-              <span>⚡ Generate Board</span>
+              <span>⚡ Generate Cards</span>
             </button>
           </div>
         </div>
@@ -144,25 +144,25 @@
         <div class="board-topbar">
           <div class="board-meta">
             <div class="board-title-row">
-              <h2 id="board-title" class="board-main-title">Communication Board</h2>
-              <span id="board-intent-badge" class="intent-badge">Awaiting Input</span>
+              <h2 id="board-title" class="board-main-title">Picture Cards</h2>
+              <span id="board-intent-badge" class="intent-badge">Ready</span>
             </div>
           </div>
 
           <div class="board-toolbar-actions">
-            <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full board sequence aloud">
+            <button id="btn-speak-all" class="btn btn-secondary btn-sm" title="Speak full card sequence aloud">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
               <span>Speak All</span>
             </button>
-            <button id="btn-voice-settings" class="btn btn-secondary btn-sm" title="Configure voice persona, pitch, and speed">
+            <button id="btn-voice-settings" class="btn btn-secondary btn-sm" title="Configure voice, pitch, and speed">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
               <span>Voice Tone</span>
             </button>
-            <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical AAC communication sheet">
+            <button id="btn-print-board" class="btn btn-secondary btn-sm" title="Print physical communication sheet">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
               <span>Print Sheet</span>
             </button>
-            <button id="btn-fullscreen" class="btn btn-secondary btn-sm" title="Fullscreen Presentation View for Recipient">
+            <button id="btn-fullscreen" class="btn btn-secondary btn-sm" title="Fullscreen Presentation View">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
               <span>Presentation</span>
             </button>
@@ -172,9 +172,9 @@
         <!-- Plain Language Sentence Ribbon -->
         <div id="simplified-banner" class="simplified-sentence-box" title="Click to speak plain sentence aloud">
           <div class="simplified-ribbon-content">
-            <span class="simplified-label">Plain Language:</span>
+            <span class="simplified-label">Plain Words:</span>
             <p id="simplified-text" class="simplified-sentence">
-              Select a preset above or enter your caregiver message to autonomously create an AAC picture board.
+              Click a quick topic above or type a message to generate picture communication cards.
             </p>
           </div>
           <div id="adaptation-alert" class="adaptation-tag hidden">
@@ -186,19 +186,19 @@
         <div id="aac-cards-grid" class="aac-grid">
           <div class="empty-board-state">
             <div class="empty-icon">🧩</div>
-            <h3>No Board Generated Yet</h3>
-            <p>CommuniCare translates caregiver messages into high contrast picture symbols, structured by clinical Fitzgerald Key standards.</p>
-            <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Morning Routine Preset</button>
+            <h3>No Cards Generated Yet</h3>
+            <p>Pick a quick topic above or type a message to create picture communication cards.</p>
+            <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Morning Routine</button>
           </div>
         </div>
 
-        <!-- Fitzgerald Key Color Legend -->
+        <!-- Color Legend -->
         <div class="fitzgerald-legend">
-          <span class="legend-title">Fitzgerald Key Standard:</span>
+          <span class="legend-title">Color Guide:</span>
           <div class="legend-pills-row">
             <span class="legend-pill" style="background:#FEFCE8; border-color:#EAB308; color:#854D0E;">Yellow: People</span>
-            <span class="legend-pill" style="background:#ECFDF5; border-color:#10B981; color:#065F46;">Green: Verbs</span>
-            <span class="legend-pill" style="background:#FFF7ED; border-color:#F97316; color:#9A3412;">Orange: Nouns</span>
+            <span class="legend-pill" style="background:#ECFDF5; border-color:#10B981; color:#065F46;">Green: Actions</span>
+            <span class="legend-pill" style="background:#FFF7ED; border-color:#F97316; color:#9A3412;">Orange: Things & Food</span>
             <span class="legend-pill" style="background:#EFF6FF; border-color:#3B82F6; color:#1E40AF;">Blue: Descriptors</span>
             <span class="legend-pill" style="background:#FDF2F8; border-color:#EC4899; color:#9D174D;">Pink: Feelings</span>
             <span class="legend-pill" style="background:#F5F3FF; border-color:#8B5CF6; color:#5B21B6;">Purple: Time</span>
@@ -368,6 +368,12 @@
               <span>Request Reset Token</span>
             </button>
           </form>
+
+          <div style="margin-top:1.25rem; text-align:center; padding-top:1rem; border-top:1px solid var(--color-soft-mist);">
+            <button type="button" id="btn-continue-guest" style="background:none; border:none; color:var(--color-stone-gray); font-size:0.85rem; text-decoration:underline; cursor:pointer;">
+              Explore interactive demo without signing in &rarr;
+            </button>
+          </div>
 
         </div>
       </div>

@@ -73,7 +73,7 @@ DEFAULT_PRESETS = [
     {
         "id": "morning_breakfast_walk",
         "caregiver_id": "caregiver_primary",
-        "title": "Morning Routine and Breakfast",
+        "title": "🌅 Morning Routine",
         "description": "Medicine, breakfast choices, and park walk",
         "recipient_id": "leo_care",
         "message": "Good morning Leo! Please take your medicine with a glass of water, then eat pancakes for breakfast and we will take a walk to the park to see the dogs."
@@ -81,7 +81,7 @@ DEFAULT_PRESETS = [
     {
         "id": "medical_checkin",
         "caregiver_id": "caregiver_primary",
-        "title": "Medical and Sensory Checkin",
+        "title": "🩺 Doctor & Health",
         "description": "Therapy session, feeling check, and hydration",
         "recipient_id": "maya_adult",
         "message": "Hello Maya, the doctor will visit soon. Let me know if you feel hurt or tired, and please drink some water before we listen to quiet music."
@@ -89,7 +89,7 @@ DEFAULT_PRESETS = [
     {
         "id": "school_transition",
         "caregiver_id": "caregiver_primary",
-        "title": "School Transition and Lunch",
+        "title": "🎒 School & Lunch",
         "description": "Getting dressed, riding the school bus, and lunchtime",
         "recipient_id": "leo_care",
         "message": "Time to put on your clothes and shoes. The yellow school bus is coming soon to take us to school. We have a lunch box with an apple and juice!"
@@ -97,7 +97,7 @@ DEFAULT_PRESETS = [
     {
         "id": "evening_bedtime",
         "caregiver_id": "caregiver_primary",
-        "title": "Evening Hygiene and Bedtime",
+        "title": "🌙 Bedtime Routine",
         "description": "Bathroom, brushing teeth, and bedtime book",
         "recipient_id": "leo_care",
         "message": "It is nighttime. Let us use the bathroom, wash hands, and brush teeth. Then we can read a book in bed and go to sleep."

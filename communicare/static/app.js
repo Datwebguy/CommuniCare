@@ -216,9 +216,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateUserUI();
 
-    // Check if URL specifies action=login
+    // If not signed in or explicit login request, prompt Auth Modal immediately
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('action') === 'login') {
+    if (!currentUser || !currentUser.token || urlParams.get('action') === 'login') {
       switchAuthTab('login');
       authModal.classList.remove('hidden');
     }
@@ -743,6 +743,15 @@ document.addEventListener('DOMContentLoaded', () => {
     tabAuthRegister.addEventListener('click', () => switchAuthTab('register'));
     tabAuthForgot.addEventListener('click', () => switchAuthTab('forgot'));
     btnCloseAuthModal.addEventListener('click', () => authModal.classList.add('hidden'));
+    
+    const btnContinueGuest = document.getElementById('btn-continue-guest');
+    if (btnContinueGuest) {
+      btnContinueGuest.addEventListener('click', () => {
+        authModal.classList.add('hidden');
+        showToast('Guest Demo', 'Exploring CommuniCare in demo mode. Sign in anytime to save your workspace.', 'info', 4000);
+      });
+    }
+
     authModal.addEventListener('click', (e) => {
       if (e.target === authModal) authModal.classList.add('hidden');
     });
