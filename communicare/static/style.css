@@ -1459,14 +1459,18 @@ html, body {
     gap: 0.4rem;
   }
 
-  .header-actions .btn span:not(.btn-icon) {
+  #btn-demo-tour {
     display: none;
   }
 
+  .header-actions .btn span:not(.btn-icon) {
+    display: inline;
+    font-size: 0.75rem;
+  }
+
   .header-actions .btn {
-    padding: 0.45rem 0.65rem;
+    padding: 0.4rem 0.75rem;
     border-radius: 8px;
-    min-width: 34px;
     justify-content: center;
   }
 
@@ -1571,10 +1575,18 @@ html, body {
 
   .board-toolbar-actions {
     width: 100%;
-    justify-content: flex-start;
-    overflow-x: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
-    padding-bottom: 2px;
+  }
+
+  .board-toolbar-actions .btn {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+    justify-content: center;
+    white-space: nowrap;
   }
 
   .simplified-sentence-box {

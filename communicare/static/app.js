@@ -507,6 +507,50 @@ document.addEventListener('DOMContentLoaded', () => {
   /* =========================================================================
      WORKSPACE & DATA LOADING (ISOLATED PER USER)
      ========================================================================= */
+  const DEFAULT_FALLBACK_RECIPIENTS = [
+    {
+      recipient_id: "leo_care",
+      name: "Leo",
+      age_group: "child",
+      vocabulary_level: "basic",
+      max_board_cards: 6
+    },
+    {
+      recipient_id: "maya_adult",
+      name: "Maya",
+      age_group: "adult",
+      vocabulary_level: "intermediate",
+      max_board_cards: 8
+    }
+  ];
+
+  const DEFAULT_FALLBACK_PRESETS = [
+    {
+      id: "morning_breakfast_walk",
+      title: "🌅 Morning Routine",
+      recipient_id: "leo_care",
+      message: "Good morning Leo! Please take your medicine with a glass of water, and then we will have warm pancakes for breakfast."
+    },
+    {
+      id: "medical_checkin",
+      title: "🩺 Doctor & Health",
+      recipient_id: "maya_adult",
+      message: "Hello Maya, the doctor will visit soon. Let me know if you feel hurt or tired, and please drink some water before we listen to quiet music."
+    },
+    {
+      id: "school_transition",
+      title: "🎒 School & Lunch",
+      recipient_id: "leo_care",
+      message: "Time to put on your clothes and shoes. The yellow school bus is coming soon to take us to school. We have a lunch box with an apple and juice!"
+    },
+    {
+      id: "evening_bedtime",
+      title: "🌙 Bedtime Routine",
+      recipient_id: "leo_care",
+      message: "Time to brush your teeth, put on your soft pajamas, and read a bedtime book before sleep."
+    }
+  ];
+
   async function reloadCaregiverWorkspace(selectedRecipientId = null) {
     await loadRecipients(selectedRecipientId);
     await loadPresets();
@@ -518,26 +562,27 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: getAuthHeaders(false)
       });
       if (res.ok) {
-        currentRecipients = await res.json();
-        renderRecipientSelect(selectedId);
+        const data = await res.json();
+        currentRecipients = Array.isArray(data) && data.length > 0 ? data : DEFAULT_FALLBACK_RECIPIENTS;
+      } else {
+        currentRecipients = DEFAULT_FALLBACK_RECIPIENTS;
       }
     } catch (e) {
-      console.warn('Could not load recipients:', e);
+      console.warn('Could not load recipients, using defaults:', e);
+      currentRecipients = DEFAULT_FALLBACK_RECIPIENTS;
     }
+    renderRecipientSelect(selectedId || (currentRecipients[0] ? currentRecipients[0].recipient_id : 'leo_care'));
   }
 
   function renderRecipientSelect(selectedId = null) {
     recipientSelect.innerHTML = '';
-    if (currentRecipients.length === 0) {
-      recipientSelect.innerHTML = '<option value="">No recipients in workspace</option>';
-      return;
-    }
+    const recipientsToRender = currentRecipients.length > 0 ? currentRecipients : DEFAULT_FALLBACK_RECIPIENTS;
 
-    currentRecipients.forEach(r => {
+    recipientsToRender.forEach(r => {
       const opt = document.createElement('option');
       opt.value = r.recipient_id;
       const emoji = r.age_group === 'child' ? '👦' : (r.age_group === 'teen' ? '🧑' : '👩');
-      opt.textContent = `${emoji} ${r.name} (${r.age_group.toUpperCase()} • ${r.vocabulary_level.toUpperCase()})`;
+      opt.textContent = `${emoji} ${r.name} (${r.age_group.toUpperCase()})`;
       recipientSelect.appendChild(opt);
     });
 
@@ -552,12 +597,16 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: getAuthHeaders(false)
       });
       if (res.ok) {
-        currentPresets = await res.json();
-        renderPresets();
+        const data = await res.json();
+        currentPresets = Array.isArray(data) && data.length > 0 ? data : DEFAULT_FALLBACK_PRESETS;
+      } else {
+        currentPresets = DEFAULT_FALLBACK_PRESETS;
       }
     } catch (e) {
-      console.warn('Could not load presets:', e);
+      console.warn('Could not load presets, using defaults:', e);
+      currentPresets = DEFAULT_FALLBACK_PRESETS;
     }
+    renderPresets();
   }
 
   const PRESET_ICONS = {
@@ -569,24 +618,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPresets() {
     presetsContainer.innerHTML = '';
-    if (currentPresets.length === 0) {
-      presetsContainer.innerHTML = '<span style="font-size:0.75rem; color:var(--color-stone-gray);">No presets saved yet.</span>';
-      return;
-    }
+    const presetsToRender = currentPresets.length > 0 ? currentPresets : DEFAULT_FALLBACK_PRESETS;
 
-    currentPresets.forEach((p) => {
+    presetsToRender.forEach((p) => {
       const icon = PRESET_ICONS[p.id] || "📋";
       const chip = document.createElement('button');
       chip.className = 'preset-chip';
       chip.type = 'button';
-      chip.innerHTML = `${icon} ${p.title}`;
-      chip.title = p.description || p.message;
+      chip.textContent = `${p.title || (icon + " " + p.id)}`;
       chip.addEventListener('click', () => {
         caregiverMessageInput.value = p.message;
-        if (p.recipient_id && currentRecipients.some(r => r.recipient_id === p.recipient_id)) {
+        if (p.recipient_id && recipientSelect.querySelector(`option[value="${p.recipient_id}"]`)) {
           recipientSelect.value = p.recipient_id;
         }
         caregiverMessageInput.focus();
+        showToast('Preset Selected', `Loaded "${p.title}" topic.`, 'info');
       });
       presetsContainer.appendChild(chip);
     });
