@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropdownBtnAddRecipient = document.getElementById('dropdown-btn-add-recipient');
   const dropdownBtnAuth = document.getElementById('dropdown-btn-auth');
   const dropdownAuthLabel = document.getElementById('dropdown-auth-label');
+  const btnHeaderSignin = document.getElementById('btn-header-signin');
+  const userProfileMenuContainer = document.getElementById('user-profile-menu-container');
 
   // DOM Elements - Auth Modal
   const authModal = document.getElementById('auth-modal');
@@ -120,14 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let isSpeakingAll = false;
   let systemVoices = [];
 
-  // Authenticated User State
-  let currentUser = {
-    user_id: 'caregiver_primary',
-    email: 'sarah@clinic.local',
-    full_name: 'Dr. Sarah Jenkins',
-    totp_enabled: false,
-    token: null
-  };
+  // Authenticated User State (defaults to null until signed in or restored)
+  let currentUser = null;
 
   // Voice Configuration State
   let voiceConfig = {
@@ -211,47 +207,63 @@ document.addEventListener('DOMContentLoaded', () => {
       if (savedUser && savedToken) {
         currentUser = JSON.parse(savedUser);
         currentUser.token = savedToken;
+      } else {
+        currentUser = null;
       }
-    } catch (e) {}
+    } catch (e) {
+      currentUser = null;
+    }
 
     updateUserUI();
+
+    // Check if URL specifies action=login
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'login') {
+      switchAuthTab('login');
+      authModal.classList.remove('hidden');
+    }
   }
 
   function updateUserUI() {
-    if (!currentUser || !currentUser.user_id) {
-      currentUser = {
-        user_id: 'caregiver_primary',
-        email: 'sarah@clinic.local',
-        full_name: 'Dr. Sarah Jenkins',
-        totp_enabled: false,
-        token: null
-      };
+    const isLoggedIn = !!(currentUser && currentUser.token);
+
+    if (btnHeaderSignin) {
+      btnHeaderSignin.classList.toggle('hidden', isLoggedIn);
+    }
+    if (userProfileMenuContainer) {
+      userProfileMenuContainer.classList.toggle('hidden', !isLoggedIn);
     }
 
-    const initials = currentUser.full_name
-      .split(' ')
-      .map(p => p[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase() || 'U';
+    if (isLoggedIn) {
+      const initials = (currentUser.full_name || 'U')
+        .split(' ')
+        .map(p => p[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase() || 'U';
 
-    if (userAvatarInitials) userAvatarInitials.textContent = initials;
-    if (userDisplayName) userDisplayName.textContent = currentUser.full_name.split(' ')[0] || 'Caregiver';
-    if (dropdownUserName) dropdownUserName.textContent = currentUser.full_name;
-    if (dropdownUserEmail) dropdownUserEmail.textContent = currentUser.email;
+      if (userAvatarInitials) userAvatarInitials.textContent = initials;
+      if (userDisplayName) userDisplayName.textContent = (currentUser.full_name || 'Caregiver').split(' ')[0];
+      if (dropdownUserName) dropdownUserName.textContent = currentUser.full_name;
+      if (dropdownUserEmail) dropdownUserEmail.textContent = currentUser.email || '';
 
-    if (dropdown2faBadge) {
-      if (currentUser.totp_enabled) {
-        dropdown2faBadge.textContent = 'Active (2FA)';
-        dropdown2faBadge.className = 'badge-subtle badge-active';
-      } else {
-        dropdown2faBadge.textContent = 'Off';
-        dropdown2faBadge.className = 'badge-subtle';
+      if (dropdown2faBadge) {
+        if (currentUser.totp_enabled) {
+          dropdown2faBadge.textContent = 'Active (2FA)';
+          dropdown2faBadge.className = 'badge-subtle badge-active';
+        } else {
+          dropdown2faBadge.textContent = 'Off';
+          dropdown2faBadge.className = 'badge-subtle';
+        }
       }
-    }
 
-    if (dropdownAuthLabel) {
-      dropdownAuthLabel.textContent = currentUser.token ? '🚪 Sign Out / Switch Account' : '🔑 Sign In / Register';
+      if (dropdownAuthLabel) {
+        dropdownAuthLabel.textContent = '🚪 Sign Out / Switch Account';
+      }
+    } else {
+      if (dropdownAuthLabel) {
+        dropdownAuthLabel.textContent = '🔑 Sign In / Register';
+      }
     }
   }
 
@@ -603,25 +615,28 @@ document.addEventListener('DOMContentLoaded', () => {
       newProfileName.focus();
     });
 
+    if (btnHeaderSignin) {
+      btnHeaderSignin.addEventListener('click', () => {
+        switchAuthTab('login');
+        authModal.classList.remove('hidden');
+        renderGoogleSignInButton();
+      });
+    }
+
     dropdownBtnAuth.addEventListener('click', () => {
       userDropdownMenu.classList.add('hidden');
-      if (currentUser.token) {
+      if (currentUser && currentUser.token) {
         // Sign Out
         localStorage.removeItem('communicare_user');
         localStorage.removeItem('communicare_token');
-        currentUser = {
-          user_id: 'caregiver_primary',
-          email: 'sarah@clinic.local',
-          full_name: 'Dr. Sarah Jenkins',
-          totp_enabled: false,
-          token: null
-        };
+        currentUser = null;
         updateUserUI();
         reloadCaregiverWorkspace();
         showToast('Signed Out', 'You have been signed out to guest mode.', 'info');
       } else {
         switchAuthTab('login');
         authModal.classList.remove('hidden');
+        renderGoogleSignInButton();
       }
     });
 
@@ -666,7 +681,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           window.google.accounts.id.initialize({
             client_id: "934093627046-o3dde5hvlkgl8qtmm1fdrjoiuvabkr8t.apps.googleusercontent.com",
-            callback: window.handleGoogleCredentialResponse
+            callback: window.handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
           });
           const btnWrapper = document.getElementById('google-btn-wrapper');
           if (btnWrapper) {
@@ -687,8 +704,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    const btnCustomGoogleLogin = document.getElementById('btn-custom-google-login');
+    if (btnCustomGoogleLogin) {
+      btnCustomGoogleLogin.addEventListener('click', () => {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          try {
+            window.google.accounts.id.prompt((notification) => {
+              if (notification && (notification.isNotDisplayed() || notification.isSkippedMoment())) {
+                const btnWrapper = document.getElementById('google-btn-wrapper');
+                if (btnWrapper) {
+                  btnWrapper.style.display = 'flex';
+                  window.google.accounts.id.renderButton(btnWrapper, {
+                    theme: "outline",
+                    size: "large",
+                    type: "standard",
+                    shape: "rectangular",
+                    text: "continue_with",
+                    logo_alignment: "left",
+                    width: 360
+                  });
+                }
+              }
+            });
+          } catch (e) {
+            showToast('Google OAuth', 'Google Identity Services prompt initiated.', 'info');
+          }
+        } else {
+          showToast('Google Sign-In', 'Google Identity Services is loading. Please try again in a moment.', 'info');
+        }
+      });
+    }
+
     // Call after DOM and scripts ready
-    setTimeout(renderGoogleSignInButton, 500);
+    setTimeout(renderGoogleSignInButton, 600);
 
     // Auth Modal Navigation
     tabAuthLogin.addEventListener('click', () => switchAuthTab('login'));
