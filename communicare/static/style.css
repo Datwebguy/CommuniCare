@@ -1410,21 +1410,282 @@ html, body {
   100% { box-shadow: 0 0 0 6px rgba(113, 76, 182, 0.5); }
 }
 
-/* Responsive */
-@media (max-width: 900px) {
+/* =========================================================================
+   COMPREHENSIVE MOBILE & RESPONSIVE DESIGN SYSTEM FOR APP STUDIO
+   Supports 100% zoom, 50% zoom, Desktop site mode on mobile, & Small Screens
+   ========================================================================= */
+
+@media (max-width: 1024px) {
   .aac-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.85rem;
   }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: 0.6rem 0.85rem;
+    gap: 0.5rem;
+  }
+
+  .brand-tagline {
+    display: none;
+  }
+
+  .brand-name {
+    font-size: 1.05rem;
+  }
+
+  .brand-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .header-recipient-selector {
+    padding: 0.3rem 0.5rem;
+    gap: 0.3rem;
+  }
+
+  .header-recipient-label {
+    display: none;
+  }
+
+  .header-select {
+    font-size: 0.8rem;
+    max-width: 110px;
+  }
+
+  .header-actions {
+    gap: 0.4rem;
+  }
+
+  .header-actions .btn span:not(.btn-icon) {
+    display: none;
+  }
+
+  .header-actions .btn {
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    min-width: 34px;
+    justify-content: center;
+  }
+
+  .user-display-name {
+    display: none;
+  }
+
+  .btn-user-pill {
+    padding: 3px;
+    border-radius: 50%;
+  }
+
+  .main-content {
+    padding: 0.85rem 0.75rem 2.5rem 0.75rem;
+    gap: 1rem;
+    max-width: 100%;
+  }
+
+  .studio-card {
+    padding: 1rem;
+    border-radius: 12px;
+    gap: 0.85rem;
+  }
+
+  .presets-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .presets-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    gap: 6px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .presets-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .preset-chip {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    padding: 5px 12px;
+  }
+
   .input-composer-row {
     flex-direction: column;
+    gap: 8px;
   }
+
+  .form-textarea {
+    min-height: 80px;
+    font-size: 0.92rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .composer-actions {
+    width: 100%;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .style-selector-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .btn-generate {
+    width: 100%;
+    min-height: 46px;
+    font-size: 0.92rem;
+    justify-content: center;
+  }
+
+  .board-card {
+    padding: 1rem;
+    border-radius: 12px;
+    gap: 1rem;
+  }
+
+  .board-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .board-title-row {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .board-main-title {
+    font-size: 1.15rem;
+  }
+
+  .board-toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 2px;
+  }
+
+  .simplified-sentence-box {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .simplified-sentence {
+    font-size: 0.88rem;
+  }
+
+  .aac-grid {
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 8px;
+    min-height: auto;
+  }
+
+  .aac-card {
+    min-height: 140px;
+    padding: 0.75rem 0.5rem;
+    border-radius: 12px;
+  }
+
+  .card-visual-wrapper {
+    width: 65px;
+    height: 65px;
+    margin: 0.8rem 0 0.35rem 0;
+  }
+
+  .card-label {
+    font-size: 0.95rem;
+  }
+
+  .card-category-tag {
+    font-size: 0.6rem;
+    padding: 2px 5px;
+  }
+
+  .fitzgerald-legend {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .legend-pills-row {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .legend-pills-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .legend-pill {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+  }
+
+  .pipeline-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
   .pipeline-steps-horizontal {
-    grid-template-columns: 1fr;
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    scrollbar-width: none;
+    padding-bottom: 4px;
   }
+
+  .pipeline-steps-horizontal::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pipeline-step {
+    flex-shrink: 0;
+    min-width: 160px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
   .toast-container {
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
     max-width: none;
+  }
+}
+
+/* Extra Small Phones (<400px) */
+@media (max-width: 400px) {
+  .aac-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .aac-card {
+    min-height: 130px;
+    padding: 0.5rem;
+  }
+  .card-visual-wrapper {
+    width: 55px;
+    height: 55px;
+  }
+  .card-label {
+    font-size: 0.85rem;
   }
 }
