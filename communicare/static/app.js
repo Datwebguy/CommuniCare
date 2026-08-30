@@ -528,25 +528,25 @@ document.addEventListener('DOMContentLoaded', () => {
     {
       id: "morning_breakfast_walk",
       title: "🌅 Morning Routine",
-      recipient_id: "leo_care",
-      message: "Good morning Leo! Please take your medicine with a glass of water, and then we will have warm pancakes for breakfast."
+      recipient_id: null, // Use currently selected recipient
+      message: "Good morning! Please take your medicine with a glass of water, and then we will have warm pancakes for breakfast."
     },
     {
       id: "medical_checkin",
       title: "🩺 Doctor & Health",
-      recipient_id: "maya_adult",
-      message: "Hello Maya, the doctor will visit soon. Let me know if you feel hurt or tired, and please drink some water before we listen to quiet music."
+      recipient_id: null, // Use currently selected recipient
+      message: "Hello, the doctor will visit soon. Let me know if you feel hurt or tired, and please drink some water before we listen to quiet music."
     },
     {
       id: "school_transition",
       title: "🎒 School & Lunch",
-      recipient_id: "leo_care",
+      recipient_id: null, // Use currently selected recipient
       message: "Time to put on your clothes and shoes. The yellow school bus is coming soon to take us to school. We have a lunch box with an apple and juice!"
     },
     {
       id: "evening_bedtime",
       title: "🌙 Bedtime Routine",
-      recipient_id: "leo_care",
+      recipient_id: null, // Use currently selected recipient
       message: "Time to brush your teeth, put on your soft pajamas, and read a bedtime book before sleep."
     }
   ];
@@ -628,11 +628,12 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.textContent = `${p.title || (icon + " " + p.id)}`;
       chip.addEventListener('click', () => {
         caregiverMessageInput.value = p.message;
-        if (p.recipient_id && recipientSelect.querySelector(`option[value="${p.recipient_id}"]`)) {
-          recipientSelect.value = p.recipient_id;
-        }
+        // Don't force recipient change - use currently selected recipient
+        // This prevents data contamination between recipients
         caregiverMessageInput.focus();
-        showToast('Preset Selected', `Loaded "${p.title}" topic.`, 'info');
+        const currentRecipient = currentRecipients.find(r => r.recipient_id === recipientSelect.value);
+        const recipientName = currentRecipient ? currentRecipient.name : 'selected recipient';
+        showToast('Preset Selected', `Loaded "${p.title}" for ${recipientName}.`, 'info');
       });
       presetsContainer.appendChild(chip);
     });
@@ -1148,6 +1149,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnDemoTour.addEventListener('click', () => runAdaptiveDemo());
+
+    // Recipient Selection Change Handler
+    recipientSelect.addEventListener('change', (e) => {
+      const selectedRecipientId = e.target.value;
+      const selectedRecipient = currentRecipients.find(r => r.recipient_id === selectedRecipientId);
+      if (selectedRecipient) {
+        showToast('Profile Changed', `Now working with ${selectedRecipient.name} (${selectedRecipient.age_group.toUpperCase()})`, 'info');
+        // Clear current board to avoid data contamination between recipients
+        currentBoard = null;
+        aacCardsGrid.innerHTML = `
+          <div class="empty-board-state">
+            <div class="empty-icon">🧩</div>
+            <h3>No Cards Generated Yet</h3>
+            <p>Pick a quick topic above or type a message to create picture communication cards for ${selectedRecipient.name}.</p>
+            <button id="btn-quick-sample" class="btn btn-primary btn-sm">Try Sample Message</button>
+          </div>
+        `;
+        simplifiedText.textContent = `Click a quick topic above or type a message to generate picture communication cards for ${selectedRecipient.name}.`;
+        adaptationAlert.classList.add('hidden');
+        
+        // Re-attach quick sample button listener
+        const quickSampleBtn = document.getElementById('btn-quick-sample');
+        if (quickSampleBtn) {
+          quickSampleBtn.addEventListener('click', () => {
+            caregiverMessageInput.value = `Hello ${selectedRecipient.name}! How are you feeling today?`;
+            caregiverMessageInput.focus();
+          });
+        }
+      }
+    });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && document.body.classList.contains('presentation-mode')) {
