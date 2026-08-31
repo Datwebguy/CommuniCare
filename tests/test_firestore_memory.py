@@ -3,6 +3,7 @@ Unit tests for Firestore State & Memory Management.
 Verifies recipient profile persistence, vocabulary learning, and preference adaptation.
 """
 
+import json
 import pytest
 from communicare.services.firestore_service import firestore_service
 from communicare.models import RecipientProfile
@@ -76,6 +77,22 @@ def test_delete_recipient_profile():
     assert firestore_service.get_recipient_profile(temp_id).name == "Temp"
     deleted = firestore_service.delete_recipient_profile(temp_id)
     assert deleted is True
+
+
+def test_service_account_json_env_parsing(monkeypatch):
+    """Service account JSON in env is enough to target Firestore without Cloud Run billing."""
+    import base64
+    payload = {"type": "service_account", "project_id": "hackathon-spark"}
+    monkeypatch.delenv("GOOGLE_SERVICE_ACCOUNT_B64", raising=False)
+    monkeypatch.setenv("GOOGLE_SERVICE_ACCOUNT_JSON", json.dumps(payload))
+    info = firestore_service._service_account_info()
+    assert info["project_id"] == "hackathon-spark"
+    assert info["type"] == "service_account"
+
+    encoded = base64.b64encode(json.dumps(payload).encode("utf-8")).decode("ascii")
+    monkeypatch.setenv("GOOGLE_SERVICE_ACCOUNT_B64", encoded)
+    info_b64 = firestore_service._service_account_info()
+    assert info_b64["project_id"] == "hackathon-spark"
 
 
 def test_dynamic_presets():

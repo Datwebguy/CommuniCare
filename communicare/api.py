@@ -312,5 +312,8 @@ def health_check():
         "gemini_active": gemini_service.client is not None,
         "gemini_model": gemini_service.model_name,
         "firestore_mode": "Google Cloud Firestore" if firestore_service._is_live_firestore else "Local Persistent JSON State",
-        "cloud_project": firestore_service.project_id or "local"
+        "cloud_project": firestore_service.project_id or "local",
+        "firestore_error": firestore_service._init_error,
+        "firestore_json_chars": firestore_service._sa_json_len,
+        "firestore_json_prefix": firestore_service._sa_json_prefix,
     }

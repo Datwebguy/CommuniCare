@@ -129,20 +129,87 @@ class FirestoreService:
         self.users_file = self.local_storage_dir / "users.json"
         self.db = None
         self._is_live_firestore = False
+        self._init_error = None
+        self._sa_json_len = 0
+        self._sa_json_prefix = ""
         
         self._init_backend()
 
+    def _normalize_sa_json(self, raw: str) -> str:
+        """Vercel often wraps JSON in quotes or keeps pretty-printed newlines."""
+        text = (raw or "").strip().lstrip("\ufeff")
+        if len(text) >= 2 and text[0] == text[-1] and text[0] in ("'", '"') and text[1] == "{":
+            text = text[1:-1].strip()
+        return text.strip()
+
+    def _service_account_info(self):
+        """Load service account JSON from env. Prefer base64 on Vercel (no newlines to mangle)."""
+        import base64
+
+        b64 = (os.getenv("GOOGLE_SERVICE_ACCOUNT_B64") or "").strip()
+        if b64:
+            text = base64.b64decode(b64).decode("utf-8")
+            self._sa_json_len = len(text)
+            self._sa_json_prefix = "b64:" + text[:18].replace("\n", " ")
+            return json.loads(text)
+
+        raw = (
+            os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
+            or os.getenv("FIREBASE_SERVICE_ACCOUNT")
+            or os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+            or ""
+        )
+        text = self._normalize_sa_json(raw)
+        self._sa_json_len = len(text)
+        self._sa_json_prefix = text[:24].replace("\n", " ")
+
+        if not text:
+            return None
+
+        if text.startswith("C:\\") or text.startswith("/Users/") or ":\\" in text[:4]:
+            self._init_error = "GOOGLE_SERVICE_ACCOUNT_JSON is a file path. Paste JSON contents or use GOOGLE_SERVICE_ACCOUNT_B64."
+            return None
+
+        if text.startswith("{"):
+            return json.loads(text)
+
+        creds_path = text
+        if creds_path and Path(creds_path).is_file():
+            with open(creds_path, "r", encoding="utf-8") as handle:
+                return json.load(handle)
+        return None
+
     def _init_backend(self):
-        """Attempt connection to Google Cloud Firestore, fallback to local JSON engine."""
-        if self.project_id and (os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.getenv("K_SERVICE")):
-            try:
-                from google.cloud import firestore
+        """Connect to Google Cloud Firestore (Firebase Spark or billed GCP). Fall back to local JSON."""
+        try:
+            from google.cloud import firestore
+            from google.oauth2 import service_account
+
+            info = self._service_account_info()
+            if info:
+                credentials = service_account.Credentials.from_service_account_info(info)
+                project_id = self.project_id or info.get("project_id")
+                self.project_id = project_id
+                self.db = firestore.Client(project=project_id, credentials=credentials)
+                self._is_live_firestore = True
+                self._init_error = None
+                logger.info(f"Connected to live Google Cloud Firestore project: {project_id}")
+                return
+
+            if self.project_id and os.getenv("K_SERVICE"):
                 self.db = firestore.Client(project=self.project_id)
                 self._is_live_firestore = True
                 logger.info(f"Connected to live Google Cloud Firestore project: {self.project_id}")
                 return
-            except Exception as e:
-                logger.warning(f"Could not connect to live Firestore ({e}). Using persistent local fallback.")
+
+            if not self._init_error:
+                if self._sa_json_len == 0:
+                    self._init_error = "GOOGLE_SERVICE_ACCOUNT_JSON is missing in this environment."
+                else:
+                    self._init_error = f"GOOGLE_SERVICE_ACCOUNT_JSON present ({self._sa_json_len} chars) but not valid JSON. Paste as one line starting with {{."
+        except Exception as e:
+            self._init_error = str(e)[:240]
+            logger.warning(f"Could not connect to live Firestore ({e}). Using persistent local fallback.")
 
         # Local persistence mode with safe temp fallback
         try:
