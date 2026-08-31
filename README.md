@@ -3,6 +3,12 @@
 
 Built for the **Google All Things Agentic Hackathon** — *Taskmaster Track*.
 
+Agent framework: **Google GenAI SDK (`google-genai`)**. Model: **Gemini 3.5 Flash**. Cloud service: **Google Cloud Firestore**. License: **MIT** (see [`LICENSE`](LICENSE)).
+
+Live demo: [https://usecommunicare.vercel.app/](https://usecommunicare.vercel.app/) · Health: [/api/health](https://usecommunicare.vercel.app/api/health)
+
+**Required Google Cloud service is Firestore** (listed in the hackathon rules). Cloud Run is preferred when billing works. If Cloud Billing fails with `OR_BACR2_44`, use **Firebase Spark Firestore** (no billing) and prove it in the demo video via the Firebase / Cloud Console.
+
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
 [![Google GenAI SDK](https://img.shields.io/badge/Google%20GenAI%20SDK-Gemini%203.5%20Flash-orange.svg)](https://github.com/google/generative-ai-python)
 [![Google Cloud Run](https://img.shields.io/badge/Google%20Cloud-Cloud%20Run%20%7C%20Firestore-4285F4.svg)](https://cloud.google.com/run)
@@ -69,11 +75,11 @@ flowchart LR
 ### Prerequisites
 - Python 3.11+
 - Git
-- Google Gemini API Key (optional for offline evaluation — built-in heuristic reasoning engine activates automatically if omitted)
+- A [Gemini API key](https://aistudio.google.com/apikey) (optional locally — without it the heuristic engine still runs the UI; production uses the live key)
 
 ### 1. Clone & Set Up Virtual Environment
 ```bash
-git clone https://github.com/your-username/CommuniCare.git
+git clone https://github.com/Datwebguy/CommuniCare.git
 cd CommuniCare
 
 # Create and activate virtual environment
@@ -96,11 +102,12 @@ Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
-Edit `.env` if using a live Gemini API key:
+Edit `.env` if using a live Gemini API key and/or Firestore:
 ```ini
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-3.5-flash
-GOOGLE_CLOUD_PROJECT=your_gcp_project_id
+GOOGLE_CLOUD_PROJECT=your_gcp_or_firebase_project_id
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}
 PORT=8080
 ```
 
@@ -132,21 +139,94 @@ To evaluate the autonomous personalization:
 
 ---
 
+## If Cloud Billing is blocked (`OR_BACR2_44`)
+
+Cloud Run needs a billed Google Cloud project. Firebase **Spark** Firestore does **not**. The official rules require *at least one* of Cloud Run, Cloud SQL, **Firestore**, GKE, or Pub/Sub. Firestore alone satisfies that clause.
+
+### 1. Create Firestore on the free Spark plan (about 5 minutes)
+
+1. Open [console.firebase.google.com](https://console.firebase.google.com) with the same Google account.
+2. Create a project (or open the one you already have). Do **not** upgrade to Blaze.
+3. Build → **Firestore Database** → Create database → **Start in test mode** → pick a region.
+4. Gear icon → **Project settings** → **Service accounts** → **Generate new private key**.
+5. Save the JSON. Never commit it.
+
+### 2. Point CommuniCare at that Firestore
+
+Local `.env` or Vercel environment variables:
+
+```ini
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.5-flash
+GOOGLE_CLOUD_PROJECT=your-firebase-project-id
+GOOGLE_SERVICE_ACCOUNT_JSON=<paste the entire service account JSON as one line>
+```
+
+Redeploy Vercel (or restart local uvicorn). Then:
+
+```bash
+curl https://usecommunicare.vercel.app/api/health
+```
+
+You want:
+
+```json
+{
+  "gemini_active": true,
+  "gemini_model": "gemini-3.5-flash",
+  "firestore_mode": "Google Cloud Firestore"
+}
+```
+
+Generate one board in the studio, then refresh Firestore in the Firebase Console. You should see `caregivers / … / recipients` documents. That is the judging proof shot.
+
+### 3. What to put on Devpost
+
+- **Hosted project URL:** `https://usecommunicare.vercel.app` (working app judges can click).
+- **Category:** Taskmaster.
+- **Technologies:** Gemini 3.5 Flash, Google GenAI SDK (`google-genai`), Google Cloud Firestore, Cloud Run Dockerfile (billing blocked).
+- **Video:** address bar of the live app + Firebase Console Firestore + `/api/health` with `gemini_active: true` and `firestore_mode: "Google Cloud Firestore"`.
+- **One honest sentence:** Cloud Run is in the repo; Cloud Billing account creation failed with `OR_BACR2_44`; the qualifying Google Cloud infrastructure service is Firestore.
+
+---
+
 ## 🚢 Google Cloud Run Production Deployment & Security
 
-> **Security Rule**: The `.env` file holding the `GEMINI_API_KEY` is explicitly git-ignored and must **never** be committed to the repository. The key must be injected at deploy time via Google Cloud Secret Manager or Cloud Run environment variables so that the deployed service actively routes through Gemini 3.5 Flash rather than dropping into the local fallback.
+> **Hackathon rule**: the demo video must show Google Cloud. If Cloud Run billing is blocked, show **Firestore in the Firebase / Cloud Console** plus `/api/health`. Vercel alone is not that proof.
+>
+> **Security rule**: `.env` holding `GEMINI_API_KEY` is git-ignored and must **never** be committed. Inject the key at deploy time via Secret Manager so production uses Gemini 3.5 Flash instead of the local heuristic fallback.
+
+### One-time GCP setup
+```bash
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  firestore.googleapis.com \
+  secretmanager.googleapis.com
+```
+
+Create Firestore in **Native** mode (same region as Cloud Run, e.g. `us-central1`) if it does not exist yet.
+
+```bash
+echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create gemini-api-key --data-file=-
+
+PROJECT_NUMBER=$(gcloud projects describe YOUR_PROJECT_ID --format='value(projectNumber)')
+
+gcloud secrets add-iam-policy-binding gemini-api-key \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --role="roles/datastore.user"
+```
 
 ### Option A: Deploy with Google Cloud Secret Manager (Recommended)
 ```bash
-# 1. Create the secret in GCP Secret Manager
-echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create gemini-api-key --data-file=-
-
-# 2. Grant Secret Accessor role to the Cloud Run service account
-gcloud secrets add-iam-policy-binding gemini-api-key \
-  --member="serviceAccount:$(gcloud projects describe YOUR_PROJECT_ID --format='value(projectNumber)')-compute@developer.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
-
-# 3. Deploy to Cloud Run mounting the secret
 gcloud run deploy communicare \
   --source . \
   --region us-central1 \
@@ -155,6 +235,10 @@ gcloud run deploy communicare \
   --set-env-vars GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,GEMINI_MODEL=gemini-3.5-flash \
   --set-secrets GEMINI_API_KEY=gemini-api-key:latest
 ```
+
+Cloud Build uses the repo `Dockerfile` and `cloudbuild.yaml`. The Cloud Run URL looks like:
+
+`https://communicare-XXXXXXXX.us-central1.run.app`
 
 ### Option B: Deploy with Direct Environment Variables
 ```bash
@@ -166,8 +250,7 @@ gcloud run deploy communicare \
   --set-env-vars GEMINI_API_KEY="YOUR_GEMINI_API_KEY",GEMINI_MODEL="gemini-3.5-flash",GOOGLE_CLOUD_PROJECT="YOUR_PROJECT_ID"
 ```
 
-### Verifying Live Gemini Activation on Cloud Run:
-After deployment, verify that the service is actively communicating with Gemini 3.5 Flash:
+### Verifying live Gemini + Firestore on Cloud Run
 ```bash
 curl https://YOUR_SERVICE_URL.run.app/api/health
 ```
@@ -178,9 +261,14 @@ Expected response:
   "service": "CommuniCare Agent Platform",
   "gemini_active": true,
   "gemini_model": "gemini-3.5-flash",
+  "firestore_mode": "Google Cloud Firestore",
   "system_status": "Operational"
 }
 ```
+
+If `gemini_active` is `false` or `firestore_mode` is `Local Persistent JSON State`, the secret or `GOOGLE_CLOUD_PROJECT` did not reach the service — fix that before recording the demo.
+
+Paste the Cloud Run URL into the Devpost **hosted project** field. Keep Vercel as a preview if you want; do not submit it as the judging URL.
 
 ---
 
