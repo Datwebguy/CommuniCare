@@ -1,205 +1,346 @@
-# CommuniCare demo — what to say, where to click
+# CommuniCare — full recording script (direct this like a shoot)
 
-**Length:** 3:30–3:55 (only the first 4 minutes are judged)  
-**Live app:** https://usecommunicare.vercel.app/  
-**Studio:** https://usecommunicare.vercel.app/app  
-**Health (proof):** https://usecommunicare.vercel.app/api/health  
-**Firestore (proof):** https://console.firebase.google.com/project/communicare-a00c9/firestore  
-**Repo:** https://github.com/Datwebguy/CommuniCare  
+You are not “showing a website.” You are proving three things in under four minutes:
 
-Record in Chrome, 1920×1080, 100% zoom, mic on. Speak like you are showing a colleague, not reading a spec. Pause half a second after each click.
+1. A real caregiving chore (building AAC boards by hand).
+2. An agent that **finishes** that chore (Google GenAI SDK + Gemini 3.5 Flash).
+3. Google Cloud is actually in the loop (Firestore console + `/api/health`).
 
-If Google Sign-In pops a window, finish it on camera. If it fails, use **Create Account** with a demo email — do not freeze.
+If you skip the Cloud proof, or mumble “AI backend,” the video fails the rubric even if the UI looks pretty.
 
 ---
 
-## Before you hit record
+## Setup (do this before Record)
 
-1. Open three tabs and leave them ready:
-   - Tab A: https://usecommunicare.vercel.app/
-   - Tab B: https://usecommunicare.vercel.app/api/health
-   - Tab C: https://console.firebase.google.com/project/communicare-a00c9/firestore
-2. Confirm health shows `"gemini_active": true` and `"firestore_mode": "Google Cloud Firestore"`.
-3. Sign **out** of the studio so the Sign In flow is visible.
-4. Close extra windows. Hide bookmarks if they clutter the bar.
+**Browser:** Chrome. Window size ~1920×1080. Zoom **100%**. Hide bookmarks bar (`Ctrl+Shift+B`). Close Slack/email popups.
 
----
+**Mic:** Sit close. Speak slightly slower than normal. Smile on the first line.
 
-## Timing
+**Three tabs, in this order, already loaded:**
 
-| Time | Scene | You are looking at |
+| Tab | URL | Why |
 | --- | --- | --- |
-| 0:00–0:35 | Problem and intro | Landing page hero |
-| 0:35–0:55 | Google Cloud proof | Health JSON + Firestore console |
-| 0:55–1:25 | Google Sign-In | Studio → Sign In / Join → Continue with Google |
-| 1:25–1:45 | Workspace | Recipient dropdown, Leo |
-| 1:45–2:25 | Generate a board | Morning Routine → Generate Cards → pipeline |
-| 2:25–2:50 | Speak and voice | Cards, Speak All, Voice Tone |
-| 2:50–3:20 | Memory | Worked Well → second message |
-| 3:20–3:50 | Print, present, close | Print Sheet, Presentation, GitHub |
+| 1 | https://usecommunicare.vercel.app/ | Landing |
+| 2 | https://usecommunicare.vercel.app/api/health | Gemini + Firestore proof |
+| 3 | https://console.firebase.google.com/project/communicare-a00c9/firestore | Cloud proof |
+
+**On tab 2 you must already see:**
+
+```json
+"gemini_active": true
+"gemini_model": "gemini-3.5-flash"
+"firestore_mode": "Google Cloud Firestore"
+"cloud_project": "communicare-a00c9"
+```
+
+If `firestore_mode` is still `Local Persistent JSON State`, **do not record.** Fix env first.
+
+**On tab 1 /app (open once, then go back to landing):**
+
+- Sign **out** so the header shows **Sign In / Join** (not your avatar).
+- Confirm a recipient named **Leo** exists. If not: Sign In once, click **+** next to Recipient, create Leo (Child, Basic), then sign out again so the login scene is clean.
+- Confirm a **Morning Routine** chip exists under Quick Topics.
+
+**Recording:** Windows Game Bar `Win+G` or OBS. 1080p. **You must talk the whole time.** Upload public YouTube: https://studio.youtube.com/ — not unlisted if you want the bonus content point.
+
+**Hard cap:** 3 minutes 50 seconds. Judges stop at 4:00.
 
 ---
 
-## Scene 1 — Introduction (0:00–0:35)
+## How to use this document
 
-**Click:** Tab A. Stay on the landing page. Slowly pan the four floating cards: MEDICINE, WALK, PANCAKES, HAPPY. Do not click Launch Studio yet.
+Each scene has:
 
-**Say:**
+- **CLOCK** — when to be there
+- **CAMERA** — what must be on screen
+- **MOUSE** — exact control names as they appear in the app
+- **YOU SAY** — read this. Do not improvise the framework names.
 
-> Hi — I’m [Your Name], and this is CommuniCare.
+Move the cursor slowly. After every click, freeze 0.4 seconds so the click is visible.
+
+---
+
+# SCENE 1 — The problem (0:00–0:40)
+
+**CLOCK:** 0:00  
+**CAMERA:** Tab 1. Landing page. Address bar visible: `usecommunicare.vercel.app`  
+**MOUSE:** Do **not** click Launch Studio. Drift the cursor across the four glass cards in this order: **MEDICINE** (top left) → **WALK** (bottom left) → **PANCAKES** (top right) → **HAPPY** (bottom right). Then rest on the headline.
+
+**YOU SAY:**
+
+> Hi. My name is [YOUR NAME], and this is CommuniCare.
 >
-> If you care for someone who is nonverbal — a child, someone recovering from a stroke, someone on the autism spectrum — you already know the morning grind. You have something ordinary to say: take your medicine, then breakfast. But they need picture cards. So you hunt a symbol library, resize tiles, color-code grammar, print a sheet. Fifteen to thirty minutes. Every routine. Every day.
+> I want you to picture a real morning. You are a parent, or a speech therapist, or a home-care aide. The person in front of you does not use fluent speech. They use picture cards. You need to say something completely ordinary: “Please take your medicine with water, then eat pancakes.”
 >
-> CommuniCare is an agent, not a chatbot. You type the sentence you would have said out loud. It builds the board.
+> Before you can say it, you have to *build the board*. Search a symbol library. Pick six pictures. Color-code people yellow and actions green. Resize. Print. Laminate. That is fifteen to thirty minutes — every routine, every day — while the person is waiting.
+>
+> CommuniCare is not a chatbot that talks about AAC. It is an agent that **does the chore**. You type the sentence you would have said. It hands you a finished board.
+
+**CUT TO SCENE 2 at 0:40.** If you are still on the hero at 0:45 you are too slow. Skip the last sentence and move.
 
 ---
 
-## Scene 2 — Proof it runs on Google Cloud (0:35–0:55)
+# SCENE 2 — Prove Google Cloud (0:40–1:05)
 
-This shot is required. Do not skip it.
+This is the scene people rush. Do not.
 
-**Click:**
+**CLOCK:** 0:40  
+**CAMERA:** Switch to **Tab 2**. Zoom the browser to 125% if the JSON is small (`Ctrl` + `+` once). Cursor underlines these four fields, slowly, top to bottom.
 
-1. Tab B — health. Point at `gemini_active: true`, `gemini_model: gemini-3.5-flash`, `firestore_mode: Google Cloud Firestore`, `cloud_project: communicare-a00c9`.
-2. Tab C — Firestore. Expand `caregivers` if documents already exist. If the tree is empty, that is fine; you will fill it in Scene 6 and glance back.
+**MOUSE:**
 
-**Say:**
+1. Point at `"gemini_active": true`
+2. Point at `"gemini_model": "gemini-3.5-flash"`
+3. Point at `"firestore_mode": "Google Cloud Firestore"`
+4. Point at `"cloud_project": "communicare-a00c9"`
 
-> Reasoning is Gemini 3.5 Flash through the Google GenAI SDK — the `google-genai` package. Memory is Google Cloud Firestore. You can see the live health check, and the same project in the Firebase console. That is the Cloud service this build uses.
+Then switch to **Tab 3**. Click into the Firestore data tree. Expand **caregivers** if it is there. Hover a recipient document so the judge can read field names like `learned_vocabulary` or `success_history`. If the tree is empty, say the next line anyway and keep moving — you will write a document in Scene 7.
 
----
+**YOU SAY:**
 
-## Scene 3 — Open the studio and sign in with Google (0:55–1:25)
+> Two things the rules asked for, on screen, live.
+>
+> First: the agent framework is the **Google GenAI SDK** — the official `google-genai` package. The model is **Gemini 3.5 Flash**. You can see `gemini_active` is true. This is not the offline fallback.
+>
+> Second: the Google Cloud service is **Cloud Firestore**. Same project: `communicare-a00c9`. Every recipient’s vocabulary lives here, isolated per caregiver. That is the memory the pipeline reads before it builds a board, and writes after.
 
-**Click:**
-
-1. Back to Tab A.
-2. Top right: **Launch Studio →** (wine button). Or the hero button **Open Caregiver Studio**.
-3. You land on `/app`. Top right: **Sign In / Join** (Google G on the button).
-4. In the modal, click **Continue with Google**.
-5. Pick your Google account. Allow.
-6. Wait until the header shows your name and avatar instead of Sign In / Join.
-
-If Google Sign-In errors: click **Create Account**, fill Full Name, Email, Password, **Create Account**. Keep talking — “email signup is the fallback; Google is the one-click path.”
-
-**Say:**
-
-> This is the Caregiver Studio. Workspaces are private. I’m signing in with Google so the agent can load my recipients from Firestore — not a shared demo bucket.
+**CUT TO SCENE 3 at 1:05.** Zoom Chrome back to 100% (`Ctrl+0`) as you switch tabs so the landing is not huge.
 
 ---
 
-## Scene 4 — Recipient workspace (1:25–1:45)
+# SCENE 3 — Enter the studio and Google Sign-In (1:05–1:35)
 
-**Click:**
+**CLOCK:** 1:05  
+**CAMERA:** Tab 1, landing, 100% zoom.
 
-1. Header, middle: **Recipient:** dropdown.
-2. Select **Leo** if he is there.
-3. If the list is empty: click the **+** next to the dropdown. Fill a name (Leo), age group Child, vocabulary Basic. Save. Select Leo.
-4. Glance at **Quick Topics** chips under the composer (Morning Routine, Doctor & Health, etc.).
+**MOUSE — exact sequence:**
 
-**Say:**
+1. Top-right wine button: **Launch Studio →**  
+   (Do not use “Try Interactive Demo.” That stays on the marketing page.)
+2. Wait for `/app`. Confirm the header: left **CommuniCare / AAC Studio**, center **Recipient:**, right **✨ Adaptive Demo** and **Sign In / Join**.
+3. Click **Sign In / Join** (the button with the Google G).
+4. Modal title: **Sign In to CommuniCare**.
+5. Click the large button **Continue with Google**.
+6. In the Google popup: choose your account → Continue / Allow.
+7. Wait until the header **Sign In / Join** is **gone** and your **avatar circle + name** appear on the right.
 
-> Each person has their own profile — how many cards they can handle, which words have worked before. Leo is a child on a basic board. Maya, if she’s in the list, is a different person with a different memory. They never mix.
+**If the Google popup is blocked:** click the browser’s popup icon in the address bar → Always allow. Retry **Continue with Google**.
+
+**If Google Sign-In still fails (10-second backup):**
+
+1. In the same modal, click the tab **Create Account**.
+2. Full Name: `Dr. Sarah Jenkins`
+3. Email: a real inbox you control, or `sarah.demo@gmail.com` if you already registered it.
+4. Password: anything 6+ characters.
+5. Click **Create Account**.
+6. Say the backup line below. Do **not** go silent.
+
+**YOU SAY (while clicking):**
+
+> This is the Caregiver Studio. Patient data cannot be a shared toy box, so the first action is identity.
+>
+> I’m signing in with Google. One click. The agent then loads *my* workspace from Firestore — my recipients, my history — not a global demo user.
+
+**Backup line if you used email instead:**
+
+> Google Sign-In is the primary path. Email signup is here as a fallback so a clinic without OAuth still gets an isolated workspace.
+
+**CUT when your name is visible in the header.** Target 1:35.
 
 ---
 
-## Scene 5 — Generate the board (1:45–2:25)
+# SCENE 4 — Pick the person you are talking to (1:35–1:50)
 
-**Click:**
+**CLOCK:** 1:35  
+**CAMERA:** Studio header, center.
 
-1. Under **Quick Topics**, click **🌅 Morning Routine** (or the morning chip). The textarea should fill.
-2. If it does not, type:
+**MOUSE:**
+
+1. Click the **Recipient:** dropdown.
+2. If **Leo** is listed, click **Leo** (or `Leo (CHILD)`).
+3. If Leo is missing:
+   - Click the small **+** button immediately to the right of the dropdown.
+   - Modal: **Add Care Recipient Profile**.
+   - Name: `Leo`
+   - Age group: Child
+   - Vocabulary: Basic
+   - Save / create.
+   - Select Leo in the dropdown.
+4. Hover the **Quick Topics** row so chips are readable: Morning Routine, Doctor & Health, etc.
+
+**YOU SAY:**
+
+> The agent always builds for one person. Leo is a child on a basic board — fewer cards, simpler words. If I switched to an adult profile, the board would get denser. Those memories never mix. That is the Firestore isolation you just saw in the console.
+
+**CUT at 1:50.** Do not explain every chip.
+
+---
+
+# SCENE 5 — One click, finished board (1:50–2:30)
+
+This is the “money” scene. Let the board appear. Do not talk over a blank grid.
+
+**CLOCK:** 1:50  
+**CAMERA:** Composer card (textarea) then the board grid.
+
+**MOUSE:**
+
+1. Under **Quick Topics:** click **🌅 Morning Routine** (wording may be “Morning Routine” without emoji — click the first morning/breakfast chip).
+2. Confirm the textarea filled. If it is empty, click into `#caregiver-message` and type, slowly enough to be readable:
 
    `Good morning Leo! Please take your medicine with a glass of water, then eat warm pancakes for breakfast.`
 
-3. Leave Style on **Core Words**.
+3. Leave **Style:** on **Core Words**. Do not open the dropdown unless you need to set it back.
 4. Click **⚡ Generate Cards**.
-5. Wait for the grid. Point at yellow / green / orange cards.
-6. Click **View Details** on **Autonomous Pipeline** so the five steps light up: Memory Lookup, Gemini Simplification, Symbol Resolution, Board Assembly, State Persistence.
+5. **Hands off.** Wait until picture cards fill the grid (MEDICINE, WATER, PANCAKES, etc.).
+6. Point at the **Plain Words:** ribbon under the title — the simplified sentence.
+7. Point along the **Color Guide** pills: Yellow People, Green Actions, Orange Things & Food.
+8. Scroll if needed. Click **View Details** on the grey bar **Autonomous Pipeline / Agent Execution Trace**.
+9. Hover each of the five steps left to right, 1–5, as you name them.
 
-**Say:**
+**YOU SAY:**
 
-> I am not picking symbols. I am not dragging tiles. One click, and the pipeline runs.
+> I am not searching a catalog. I am not dragging tiles. This is the message I would have said at the breakfast table.
 >
-> It loads Leo from Firestore. Gemini 3.5 Flash, via the Google GenAI SDK, turns that long sentence into a few core words. We match pictograms from ARASAAC. We lay them out on the Fitzgerald Key — yellow for people, green for actions, orange for things. Then we write the session back to Firestore.
+> Generate Cards.
 >
-> That board used to take a caregiver half an hour. This is the task the agent finishes.
+> *[pause until cards appear]*
+>
+> There. Medicine, water, pancakes — color-coded the way speech therapists already teach: yellow for people, green for actions, orange for things.
+>
+> Under the hood that was five steps, no extra prompts from me. One: load Leo from Firestore. Two: **Gemini 3.5 Flash**, through the **Google GenAI SDK**, cuts the sentence down to core words. Three: match pictograms from ARASAAC. Four: lay out the Fitzgerald Key board. Five: write this session back to Firestore.
+>
+> That is the task. The chore is done.
+
+**CUT at 2:30.** If generate is slow, keep the last paragraph going; do not apologize.
 
 ---
 
-## Scene 6 — Sound and voice (2:25–2:50)
+# SCENE 6 — The board is usable, not a screenshot (2:30–2:55)
 
-**Click:**
+**CLOCK:** 2:30  
+**CAMERA:** The card grid. Unmute your speakers; the demo has TTS.
 
-1. Click the **MEDICINE** card. Wait for the glow and the spoken word.
-2. Click **WATER**, then **PANCAKES**.
-3. Click **Speak All**. Let the sentence finish.
-4. Click **Voice Tone**.
-5. Change **Voice Tone Persona** to **🧒 Child Friendly**. Click **🔊 Preview Voice**. Click **Apply Voice**. Close the modal.
+**MOUSE:**
 
-**Say:**
+1. Click the **MEDICINE** card once. Wait for the wine-colored speaking ring and the audio.
+2. Click **WATER**. Wait.
+3. Click **PANCAKES**. Wait.
+4. Click **Speak All** (left side of the board toolbar). Let the full sentence play. Do not cut it off.
+5. Click **Voice Tone**.
+6. In **Voice & Tone Settings**, open **Voice Tone Persona**.
+7. Choose **🧒 Child Friendly (Warm, High Tone)**.
+8. Click **🔊 Preview Voice**. Let one phrase play.
+9. Click **Apply Voice**.
+10. Close the modal with the **×** in the top right.
 
-> Every card speaks. Speak All reads the plain sentence so the person can hear it, not just see it. Voice Tone is for sensory needs — a warmer child voice, or slower and calmer if that is what they need.
+**YOU SAY:**
+
+> A PDF of icons is not enough. The person at the table needs sound.
+>
+> Each card speaks when I touch it. Speak All reads the plain sentence all the way through — that used to clip; it doesn’t now.
+>
+> Voice Tone is for real sensory needs. Child-friendly is higher and warmer. There is also a slow, quiet setting if someone is overwhelmed. Same board, different voice.
+
+**CUT at 2:55.** Skip Preview if you are behind; still click Child Friendly and Apply.
 
 ---
 
-## Scene 7 — Memory (2:50–3:20)
+# SCENE 7 — It remembers Leo (2:55–3:25)
 
-**Click:**
+**CLOCK:** 2:55  
+**CAMERA:** Same board, then Firestore tab, then back.
 
-1. On the MEDICINE card, click **👍 Worked Well** (or the clear / worked-well control on the card). Wait for the toast.
-2. Optional: Tab C, refresh Firestore, point at the updated document.
-3. Back on the studio. Clear the textarea. Type:
+**MOUSE:**
+
+1. On the **MEDICINE** card, find the feedback control **👍 Worked Well** (or “Worked Well” / thumbs-up). Click it. Wait for the toast that memory was updated.
+2. Switch to **Tab 3** (Firestore). Click refresh in the console if needed. Open `caregivers` → your user → `recipients` → Leo (or the probe path). Point at `success_history` or `preferred_symbol_mappings` if visible.
+3. Back to **Tab 1** studio.
+4. Click inside the textarea. Select all (`Ctrl+A`). Delete.
+5. Type:
 
    `Leo, remember to take your afternoon medicine before we go for a walk to the park.`
 
-4. Click **⚡ Generate Cards**.
-5. Point at the purple tag: **✨ Personalized preference applied from memory**.
+6. Click **⚡ Generate Cards**.
+7. When the new board appears, point at the purple tag: **✨ Personalized preference applied from memory**.
 
-**Say:**
+**YOU SAY:**
 
-> When a symbol actually works, I mark it. That preference is stored in Firestore. The next message — afternoon medicine, then a walk — the agent already knows what Leo understands. It is not a blank chat every time. It is the same person, remembered.
+> This is the difference between a generator and an agent with state.
+>
+> Medicine worked for Leo this morning, so I mark Worked Well. That write goes to Firestore — you can see the document update.
+>
+> Afternoon, different sentence: medicine, then a walk. I do not rebuild his vocabulary by hand. The pipeline reads what already worked and tags the board: personalized preference applied from memory.
+>
+> Tomorrow’s board is not a stranger. It is Leo.
+
+**CUT at 3:25.** If the purple tag does not show, still say the Firestore sentence and move to print. Do not debug on camera.
 
 ---
 
-## Scene 8 — Print, present, close (3:20–3:50)
+# SCENE 8 — Give them something they can hold (3:25–3:50)
 
-**Click:**
+**CLOCK:** 3:25  
+**CAMERA:** Toolbar on the board.
 
-1. **Print Sheet** — show the printable layout, then cancel print if a dialog opens (Esc).
-2. **Presentation** — fullscreen board. Pause. **Exit Presentation** or Esc.
-3. Click your name (avatar pill) → **⭐ GitHub Repository** or show https://github.com/Datwebguy/CommuniCare in the bar.
-4. End on the live app URL.
+**MOUSE:**
 
-**Say:**
+1. Click **Print Sheet**. If the browser print dialog opens, wait one beat so the layout is visible, then press **Esc**. Do not actually print.
+2. Click **Presentation**. The board goes fullscreen. Hold two seconds. Move the cursor to a card so it is obvious this is the tablet view.
+3. Click **Exit Presentation (Esc)** or press **Esc**.
+4. Click your **avatar / name** in the top right.
+5. In the dropdown, click **⭐ GitHub Repository**. Let the repo load, or hover the link so `github.com/Datwebguy/CommuniCare` is readable.
+6. End on the studio with the board still showing. Address bar: `usecommunicare.vercel.app/app`.
 
-> You can print the sheet for a binder, or go fullscreen on a tablet at the table.
+**YOU SAY:**
+
+> Last mile: a physical sheet for a binder, or fullscreen on a tablet at the table. No extra export tool.
 >
-> CommuniCare is open source. Google GenAI SDK, Gemini 3.5 Flash, Cloud Firestore. A caregiver message in. A finished communication board out.
+> The code is public, MIT licensed: Datwebguy slash CommuniCare. Clone it, put in a Gemini key, it runs.
+>
+> CommuniCare: **Google GenAI SDK**, **Gemini 3.5 Flash**, **Cloud Firestore**. A caregiver message in. A finished communication board out. The thirty-minute chore is gone.
 >
 > Thank you.
 
----
-
-## If you still have 10 seconds
-
-Avatar menu → **🔐 Google Authenticator (2FA)** — show the setup screen, do not stall on QR.  
-Or **🧠 Recipient Memory** — show learned vocabulary counts.
+**STOP talking by 3:50.** Fade out. Do not add “any questions.”
 
 ---
 
-## Recording notes
+## If you are running long — cut in this order
 
-- Name **Google GenAI SDK** and **Gemini 3.5 Flash** out loud in Scene 2. Judges look for the required framework early.
-- Name **Firestore** while the console is on screen.
-- Do not say “chatbot.” Say “agent” and “pipeline.”
-- Do not record a silent screen. Narrate every click.
-- If a generate is slow, keep talking: “This is the live Gemini call, not the offline fallback.”
-- Upload **public** YouTube or Vimeo, English, under 4 minutes: https://studio.youtube.com/
+1. Drop Voice Tone preview (keep one card click + Speak All).
+2. Drop Print Sheet (keep Presentation).
+3. Drop Firestore refresh in Scene 7 (keep Worked Well + second generate).
+4. **Never** cut Scene 2 (health + Firestore) or Scene 5 (generate + five steps).
 
-## After recording — Devpost fields
+## If you are running short — add only this
 
-Paste the text in `docs/devpost-text.md`.  
-Hosted URL: https://usecommunicare.vercel.app/  
-Repo: https://github.com/Datwebguy/CommuniCare  
-Category: **Taskmaster**
+Avatar menu → **🧠 Recipient Memory**. Point at learned vocabulary counts. One sentence: “This is the Firestore profile the next board will read.”
+
+---
+
+## Words you must say (checklist)
+
+Say each of these out loud at least once:
+
+- [ ] “Not a chatbot”
+- [ ] “Google GenAI SDK”
+- [ ] “Gemini 3.5 Flash”
+- [ ] “Cloud Firestore”
+- [ ] “Fitzgerald Key” or “yellow people, green actions”
+- [ ] “Worked Well” / “memory”
+
+Do **not** say: Strands Agents (this repo does not use it). Do **not** say “we used AI to build the backend” without naming the SDK.
+
+---
+
+## After you stop recording
+
+1. Watch the first 4 minutes. If Cloud proof is missing, re-record Scene 2 and splice, or re-record the whole thing — splicing is fine if the join is clean.
+2. Upload **Public** to YouTube: https://studio.youtube.com/
+3. Devpost:
+   - Category: **Taskmaster**
+   - Hosted URL: https://usecommunicare.vercel.app/
+   - Repo: https://github.com/Datwebguy/CommuniCare
+   - Description: paste `docs/devpost-text.md`
+4. GitHub About (repo ⚙️): description `Caregiver speech → AAC boards. Google GenAI SDK + Gemini 3.5 Flash + Firestore.` Tick **MIT** now that `LICENSE` is on `main`.
