@@ -235,10 +235,11 @@ class FirestoreService:
 
     def initialize_user_workspace(self, user_id: str, user_name: str):
         """Create clean initial starter recipient and preset for a newly registered user."""
+        first_name = user_name.split()[0] if user_name else "User"
         starter_recipient = RecipientProfile(
             recipient_id=f"recipient_{user_id[:8]}",
             caregiver_id=user_id,
-            name="Alex",
+            name=first_name,
             age_group="child",
             vocabulary_level="basic",
             max_board_cards=6,
@@ -254,7 +255,7 @@ class FirestoreService:
             "title": "Morning Routine Starter",
             "description": "Daily morning routine",
             "recipient_id": starter_recipient.recipient_id,
-            "message": "Good morning Alex! Time to eat breakfast and drink a glass of water."
+            "message": f"Good morning {first_name}! Time to eat breakfast and drink a glass of water."
         }
         self.save_preset(starter_preset, caregiver_id=user_id)
 
